@@ -7,6 +7,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore"
 import { auth, db } from "./firebase"
 import { loadGoogleCalendarEvents } from "./calendar"
 import { generateUniqueJoinCode } from "./joinCode"
+import { persistGoogleTokens } from "./googleTokens"
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -15,6 +16,7 @@ const scopes = [
   "https://www.googleapis.com/auth/userinfo.profile",
   "https://www.googleapis.com/auth/userinfo.email",
   "https://www.googleapis.com/auth/calendar.readonly",
+  "https://www.googleapis.com/auth/calendar.events",
 ]
 
 const normalizeEvents = (items: any[] = []) =>
@@ -23,6 +25,7 @@ const normalizeEvents = (items: any[] = []) =>
     title: event.summary ?? "BusyBee Event",
     start: event.start?.dateTime ?? event.start?.date ?? "",
     end: event.end?.dateTime ?? event.end?.date ?? "",
+    source: "google" as const,
   }))
 
 const getClientIds = () => ({
@@ -47,6 +50,10 @@ export const useGoogleAuth = () => {
     scopes,
     responseType: ResponseType.Code,
     redirectUri,
+    extraParams: {
+      access_type: "offline",
+      prompt: "consent",
+    },
   })
 
   useEffect(() => {
@@ -58,10 +65,21 @@ export const useGoogleAuth = () => {
         const params = (response.params ?? {}) as Record<string, string>
         const accessToken = response.authentication?.accessToken ?? params["access_token"]
         const idToken = response.authentication?.idToken ?? params["id_token"]
+        const refreshToken = response.authentication?.refreshToken ?? params["refresh_token"]
+        const expiresInRaw = response.authentication?.expiresIn ?? params["expires_in"]
+        const expiresIn = expiresInRaw ? Number(expiresInRaw) : 3600
+        const activeClientId = request?.clientId ?? clientIds.clientId
 
         if (!idToken || !accessToken) {
           throw new Error("Missing Google tokens.")
         }
+
+        await persistGoogleTokens({
+          accessToken,
+          refreshToken,
+          expiresIn,
+          clientId: activeClientId,
+        })
 
         const credential = GoogleAuthProvider.credential(idToken)
         const userCred = await signInWithCredential(auth, credential)
@@ -98,7 +116,7 @@ export const useGoogleAuth = () => {
     }
 
     persistUser()
-  }, [response])
+  }, [clientIds, request, response])
 
   const signIn = useCallback(async () => {
     if (!request) {

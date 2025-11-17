@@ -99,6 +99,9 @@ export default function CalendarTab() {
     setCurrentMonth(next)
   }
 
+  const visibleRowCount = Math.min(Math.max(selectedEvents.length, 1), 4)
+  const flatListHeight = visibleRowCount * 74
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fdfaf3" }}>
       <View style={{ flex: 1, padding: 24 }}>
@@ -179,7 +182,7 @@ export default function CalendarTab() {
         </View>
       </View>
 
-      <View style={{ flex: 1, marginTop: 24}}>
+      <View style={{  flex: 1, height: flatListHeight, marginTop: 24 }}>
         <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>
           {new Date(selectedDateKey).toLocaleDateString(undefined, {
             weekday: "long",
@@ -194,12 +197,15 @@ export default function CalendarTab() {
               `${item.id}-${new Date(item.start).getTime()}-${index}`
             }
             renderItem={({ item }) => <EventRow event={item} onLongPress={handleRemove} />}
-            style={{ flex: 1}}
-            contentContainerStyle={{ paddingBottom: 16 }}
+            style={{ height: flatListHeight }}
+            contentContainerStyle={{ paddingBottom: 8 }}
           />
         ) : (
           <Text style={{ color: "#777" }}>No events for this day.</Text>
         )}
+
+        <BusyBeeButton title="Add Event" onPress={() => router.push("/addEvent")} />
+          
       </View>
 
     </View>

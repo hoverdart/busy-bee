@@ -36,6 +36,23 @@ type CalendarProviderProps = {
   children: ReactNode
 }
 
+const createEventKey = (event: CalendarEvent) =>
+  `${event.id}-${typeof event.start === "string" ? event.start : event.start.toISOString()}-${
+    typeof event.end === "string" ? event.end : event.end.toISOString()
+  }-${event.title}`
+
+const dedupeEvents = (items: CalendarEvent[]) => {
+  const seen = new Set<string>()
+  const cleaned: CalendarEvent[] = []
+  items.forEach((event) => {
+    const key = createEventKey(event)
+    if (seen.has(key)) return
+    seen.add(key)
+    cleaned.push(event.source ? event : { ...event, source: "manual" })
+  })
+  return cleaned
+}
+
 const mapGoogleEvents = (items: any[] = []): CalendarEvent[] =>
   items.map((event) => ({
     id: event.id ?? Math.random().toString(36).slice(2),
@@ -64,11 +81,17 @@ export const CalendarProvider = ({ children }: CalendarProviderProps) => {
     if (snapshot.exists()) {
       const data = snapshot.data()
       const storedEvents = (data?.calendarEvents as CalendarEvent[]) ?? []
-      setEvents(
-        storedEvents.map((event) =>
-          event.source ? event : { ...event, source: "manual" as const }
+      const deduped = dedupeEvents(storedEvents)
+      if (deduped.length !== storedEvents.length) {
+        await setDoc(
+          docRef,
+          {
+            calendarEvents: deduped,
+          },
+          { merge: true }
         )
-      )
+      }
+      setEvents(deduped)
     } else {
       setEvents([])
     }
@@ -138,7 +161,7 @@ export const CalendarProvider = ({ children }: CalendarProviderProps) => {
       const manualEvents = existing
         .filter((event) => event.source !== "google")
         .map((event) => (event.source ? event : { ...event, source: "manual" as const }))
-      const merged = [...manualEvents, ...googleEvents]
+      const merged = dedupeEvents([...manualEvents, ...googleEvents])
       await setDoc(
         docRef,
         {

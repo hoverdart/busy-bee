@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Alert, Text, TouchableOpacity, View, FlatList } from "react-native"
+import { Alert, Text, TouchableOpacity, View, FlatList, ScrollView } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useCalendar, type CalendarEvent } from "../../context/CalendarProvider"
 import { BusyBeeButton } from "../../components/BusyBeeButton"
@@ -62,6 +62,7 @@ export default function CalendarTab() {
   const { events, removeEvent } = useCalendar()
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDateKey, setSelectedDateKey] = useState(dateKey(new Date()))
+  
 
   const eventsByDay = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {}
@@ -99,12 +100,17 @@ export default function CalendarTab() {
     setCurrentMonth(next)
   }
 
-  const visibleRowCount = Math.min(Math.max(selectedEvents.length, 1), 4)
-  const flatListHeight = visibleRowCount * 74
+  const MAX_VISIBLE = 3
+  const ROW_HEIGHT = 74
+  const flatListHeight =
+  selectedEvents.length > 0
+    ? Math.min(selectedEvents.length, MAX_VISIBLE) * ROW_HEIGHT
+    : ROW_HEIGHT
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fdfaf3" }}>
-      <View style={{ flex: 1, padding: 24 }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      <View style={{ flex: 1 }}>
       <Text style={{ fontSize: 28, fontWeight: "700" }}>My Calendar</Text>
       <Text style={{ marginTop: 4, color: "#666" }}>Tap a date to view events. Long-press an event to remove it.</Text>
 
@@ -182,7 +188,7 @@ export default function CalendarTab() {
         </View>
       </View>
 
-      <View style={{  flex: 1, height: flatListHeight, marginTop: 24 }}>
+      <View style={{ marginTop: 24 }}>
         <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>
           {new Date(selectedDateKey).toLocaleDateString(undefined, {
             weekday: "long",
@@ -190,6 +196,7 @@ export default function CalendarTab() {
             day: "numeric",
           })}
         </Text>
+      
         {selectedEvents.length ? (
           <FlatList
             data={selectedEvents}
@@ -198,19 +205,21 @@ export default function CalendarTab() {
             }
             renderItem={({ item }) => <EventRow event={item} onLongPress={handleRemove} />}
             style={{ height: flatListHeight }}
+            scrollEnabled={selectedEvents.length > MAX_VISIBLE}
             contentContainerStyle={{ paddingBottom: 8 }}
           />
         ) : (
           <Text style={{ color: "#777" }}>No events for this day.</Text>
         )}
 
-        <BusyBeeButton title="Add Event" onPress={() => router.push("/addEvent")} />
-          
       </View>
 
-    </View>
-    
+        <View style={{ marginTop: 16 }}>
+          <BusyBeeButton title="Add Event" onPress={() => router.push("/addEvent")} />
+        </View>
 
-  </SafeAreaView>
+      </View>
+      </ScrollView>
+    </SafeAreaView>
   )
 }

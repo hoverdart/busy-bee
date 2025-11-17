@@ -1,4 +1,4 @@
-import { Image, ScrollView, Text, View } from "react-native"
+import { ScrollView, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useFirebase } from "../../../context/FirebaseProvider"
 
@@ -18,16 +18,6 @@ export default function AccountSettings() {
           </Text>
           {user?.email ? <Text style={{ marginTop: 4, color: "#777" }}>{user.email}</Text> : null}
         </View>
-
-        {user?.photoURL ? (
-          <View style={{ marginTop: 24 }}>
-            <Text style={{ fontSize: 16, fontWeight: "600", marginBottom: 8 }}>Profile Photo</Text>
-            <Image
-              source={{ uri: user.photoURL }}
-              style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: "#eee" }}
-            />
-          </View>
-        ) : null}
       </ScrollView>
     </SafeAreaView>
   )

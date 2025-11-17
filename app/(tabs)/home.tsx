@@ -152,7 +152,7 @@ export default function HomeTab() {
     })
     if (active) {
       return {
-        label: `${partnerProfile?.displayName ?? "Your partner"} is currently in`,
+        label: `${partnerProfile?.displayName ?? "Your partner"} is currently in: `,
         value: active.title,
         freeAt: toDate(active.end).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
       }
@@ -164,7 +164,7 @@ export default function HomeTab() {
 
     if (upcoming) {
       return {
-        label: `${partnerProfile?.displayName ?? "Your partner"} is currently free`,
+        label: `${partnerProfile?.displayName ?? "Your partner"} is currently free!`,
         value: `Next: ${upcoming.title}`,
         freeAt: `Busy at ${upcoming.startDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
       }

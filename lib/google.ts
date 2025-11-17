@@ -11,8 +11,8 @@ WebBrowser.maybeCompleteAuthSession()
 
 const scopes = [
   "openid",
-  "https://www.googleapis.com/auth/profile",
-  "https://www.googleapis.com/auth/email",
+  "https://www.googleapis.com/auth/userinfo.profile",
+  "https://www.googleapis.com/auth/userinfo.email",
   "https://www.googleapis.com/auth/calendar.readonly",
 ]
 
@@ -25,6 +25,7 @@ const normalizeEvents = (items: any[] = []) =>
   }))
 
 const getClientIds = () => ({
+  clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "",
   iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "",
   androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? "",
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "",
@@ -34,6 +35,7 @@ export const useGoogleAuth = () => {
   const clientIds = useMemo(getClientIds, [])
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  console.log("oiufdhsahfdsahfdsahk;fashdk");
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     ...clientIds,
@@ -42,7 +44,6 @@ export const useGoogleAuth = () => {
     extraParams: {
       response_type: "token id_token",
       prompt: "consent",
-      access_type: "offline",
       include_granted_scopes: "true",
     },
   })

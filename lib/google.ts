@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import * as WebBrowser from "expo-web-browser"
 import * as Google from "expo-auth-session/providers/google"
-import { ResponseType } from "expo-auth-session"
+import { makeRedirectUri, ResponseType } from "expo-auth-session"
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth"
-import { doc, setDoc } from "firebase/firestore"
+import { doc, getDoc, setDoc } from "firebase/firestore"
 import { auth, db } from "./firebase"
 import { loadGoogleCalendarEvents } from "./calendar"
+import { generateUniqueJoinCode } from "./joinCode"
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -35,47 +36,54 @@ export const useGoogleAuth = () => {
   const clientIds = useMemo(getClientIds, [])
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  console.log("oiufdhsahfdsahfdsahk;fashdk");
+  const redirectUri = makeRedirectUri({
+    native:
+      process.env.GOOGLE_OAUTH_SCHEME_REDIRECT ??
+      "com.googleusercontent.apps.319228771674-2bkrrf785dsch58uhpt35rvh20g1rtrb:/oauthredirect",
+  })
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     ...clientIds,
     scopes,
-    responseType: ResponseType.Token,
-    extraParams: {
-      response_type: "token id_token",
-      prompt: "consent",
-      include_granted_scopes: "true",
-    },
+    responseType: ResponseType.Code,
+    redirectUri,
   })
 
   useEffect(() => {
     const persistUser = async () => {
       if (response?.type !== "success") return
 
-      const accessToken = response.authentication?.accessToken ?? response.params?.access_token
-      const idToken = response.authentication?.idToken ?? response.params?.id_token
-
-      if (!accessToken || !idToken) {
-        setError("Google response didn't include tokens. Please try again.")
-        return
-      }
-
       setProcessing(true)
       try {
+        const params = (response.params ?? {}) as Record<string, string>
+        const accessToken = response.authentication?.accessToken ?? params["access_token"]
+        const idToken = response.authentication?.idToken ?? params["id_token"]
+
+        if (!idToken || !accessToken) {
+          throw new Error("Missing Google tokens.")
+        }
+
         const credential = GoogleAuthProvider.credential(idToken)
         const userCred = await signInWithCredential(auth, credential)
 
         const eventsFromGoogle = await loadGoogleCalendarEvents(accessToken)
         const calendarEvents = normalizeEvents(eventsFromGoogle)
 
+        const userRef = doc(db, "users", userCred.user.uid)
+        const snapshot = await getDoc(userRef)
+        const existingJoinCode = snapshot.exists() ? (snapshot.data()?.joinCode as string | undefined) : undefined
+        const joinCode = existingJoinCode ?? (await generateUniqueJoinCode())
+
         await setDoc(
-          doc(db, "users", userCred.user.uid),
+          userRef,
           {
             email: userCred.user.email,
             displayName: userCred.user.displayName,
             photoURL: userCred.user.photoURL,
             calendarEvents,
             lastSyncedAt: new Date().toISOString(),
+            joinCode,
+            calendarOwner: userCred.user.uid,
           },
           { merge: true }
         )

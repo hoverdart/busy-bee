@@ -5,12 +5,15 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "busybee",
+    "scheme": "com.googleusercontent.apps.319228771674-2bkrrf785dsch58uhpt35rvh20g1rtrb",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.busy-bee"
+      "bundleIdentifier": "com.shauryaverma.busybee",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {

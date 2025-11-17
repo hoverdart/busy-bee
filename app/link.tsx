@@ -4,8 +4,7 @@ import { BusyBeeButton } from "../components/BusyBeeButton"
 import { useFirebase } from "../context/FirebaseProvider"
 import { db } from "../lib/firebase"
 import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore"
-
-const generateJoinCode = () => Math.random().toString(36).slice(2, 8).toUpperCase()
+import { generateUniqueJoinCode } from "../lib/joinCode"
 
 export default function Link() {
   const { user } = useFirebase()
@@ -32,7 +31,7 @@ export default function Link() {
       setStatus("Please sign in first.")
       return
     }
-    const newCode = joinCode || generateJoinCode()
+    const newCode = joinCode || (await generateUniqueJoinCode())
     await setDoc(
       doc(db, "users", user.uid),
       {
@@ -42,7 +41,6 @@ export default function Link() {
       { merge: true }
     )
     setJoinCode(newCode)
-    setStatus(`Share this join code: ${newCode}`)
   }
 
   const handleConnect = async () => {
@@ -125,12 +123,11 @@ export default function Link() {
           marginVertical: 12,
         }}
       />
-      <BusyBeeButton title="Connect Calendars" onPress={handleConnect} />
+      <BusyBeeButton title="Connect" onPress={handleConnect} />
 
       {connectedWith ? (
         <Text style={{ marginTop: 12 }}>Connected with: {connectedWith}</Text>
       ) : null}
-      {status ? <Text style={{ marginTop: 12 }}>{status}</Text> : null}
     </View>
   )
 }

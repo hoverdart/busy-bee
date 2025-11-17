@@ -1,20 +1,29 @@
 import { useState } from "react"
 import { View, TextInput, Text } from "react-native"
+import DateTimePicker from "@react-native-community/datetimepicker"
 import { BusyBeeButton } from "../components/BusyBeeButton"
 import { useCalendar } from "../context/CalendarProvider"
 
 export default function AddEvent() {
   const { addEvent } = useCalendar()
   const [title, setTitle] = useState("")
+  const [start, setStart] = useState(new Date())
+  const [end, setEnd] = useState(new Date())
 
   const submit = async () => {
-    const now = new Date().toISOString()
-
     await addEvent({
       title,
-      start: now,
-      end: now,
+      start,
+      end
     })
+  }
+
+  const setStarting = (_event: any, selectedDate: Date | undefined) => {
+    const currentDate = selectedDate || start
+    setStart(currentDate)
+    if (currentDate > end) {
+      setEnd(currentDate)
+    }
   }
 
   return (
@@ -31,6 +40,20 @@ export default function AddEvent() {
           padding: 12,
           borderRadius: 8,
           marginVertical: 12,
+        }}
+      />
+
+      <Text style={{ marginTop: 12, fontWeight: "600" }}>Start</Text>
+      <DateTimePicker value={start} mode="datetime" is24Hour onChange={setStarting} />
+
+      <Text style={{ marginTop: 12, fontWeight: "600" }}>End</Text>
+      <DateTimePicker
+        value={end}
+        mode="datetime"
+        is24Hour
+        onChange={(_event, selectedDate) => {
+          const currentDate = selectedDate || end
+          setEnd(currentDate < start ? start : currentDate)
         }}
       />
 

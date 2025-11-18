@@ -1,23 +1,20 @@
-import { Tabs, Redirect } from "expo-router"
+import { Redirect, Tabs } from "expo-router"
 import { ActivityIndicator, View } from "react-native"
-import { useFirebase } from "../../context/FirebaseProvider"
 import { Ionicons } from "@expo/vector-icons"
+import { useFirebase } from "../../context/FirebaseProvider"
 
-const tabIcon = (name: keyof typeof Ionicons.glyphMap) => ({
-  color,
-  focused,
-}: {
-  color: string
-  focused: boolean
-}) => <Ionicons name={name} size={focused ? 22 : 20} color={color} />
+const tabIcon =
+  (name: keyof typeof Ionicons.glyphMap) =>
+  ({ color, focused }: { color: string; focused: boolean }) =>
+    <Ionicons name={name} size={focused ? 24 : 20} color={color} />
 
 export default function TabsLayout() {
   const { user, loading } = useFirebase()
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator />
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fdf6e6" }}>
+        <ActivityIndicator color="#f5a524" />
       </View>
     )
   }
@@ -31,40 +28,22 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: "#f5a524",
-        tabBarInactiveTintColor: "#8b887e",
+        tabBarInactiveTintColor: "#c5baa2",
         tabBarStyle: {
           backgroundColor: "#fff",
-          borderTopColor: "#ede8dd",
-          height: 62,
+          borderTopColor: "#f3e3c7",
+          height: 64,
           paddingBottom: 8,
-          paddingTop: 6,
+          paddingTop: 8,
         },
         tabBarLabelStyle: { fontWeight: "600", fontSize: 12 },
-        sceneStyle: { backgroundColor: "#fdfaf3" },
+        sceneStyle: { backgroundColor: "#fdf6e6" },
         tabBarHideOnKeyboard: true,
       }}
     >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: "Home",
-          tabBarIcon: tabIcon("home"),
-        }}
-      />
-      <Tabs.Screen
-        name="calendar"
-        options={{
-          title: "My Calendar",
-          tabBarIcon: tabIcon("calendar"),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: tabIcon("settings"),
-        }}
-      />
+      <Tabs.Screen name="home" options={{ title: "Home", tabBarIcon: tabIcon("home") }} />
+      <Tabs.Screen name="calendar" options={{ title: "My Calendar", tabBarIcon: tabIcon("calendar") }} />
+      <Tabs.Screen name="settings" options={{ title: "Settings", tabBarIcon: tabIcon("settings") }} />
     </Tabs>
   )
 }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { ScrollView, View, Text } from "react-native"
+import { ScrollView, View, Text, ImageBackground } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { BusyBeeButton } from "../../components/BusyBeeButton"
@@ -154,7 +154,7 @@ export default function HomeTab() {
       return {
         label: `${partnerProfile?.displayName ?? "Your partner"} is currently in: `,
         value: active.title,
-        freeAt: toDate(active.end).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+        freeAt: "free at " + toDate(active.end).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
       }
     }
     const upcoming = partnerEvents
@@ -166,7 +166,7 @@ export default function HomeTab() {
       return {
         label: `${partnerProfile?.displayName ?? "Your partner"} is currently free!`,
         value: `Next: ${upcoming.title}`,
-        freeAt: `Busy at ${upcoming.startDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
+        freeAt: `busy at ${upcoming.startDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
       }
     }
     return {
@@ -177,41 +177,93 @@ export default function HomeTab() {
   }, [partnerEvents, partnerProfile])
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdfaf3" }}>
-      <ScrollView
-        contentContainerStyle={{ padding: 24, paddingBottom: 120 }}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-      <Text style={{ fontSize: 28, fontWeight: "700" }}>Welcome back{user?.displayName ? `, ${user.displayName}` : ""}!</Text>
-      <Text style={{ marginTop: 4, color: "#666" }}>
-        Keep your hive synced and see what's coming up for you and your busy bee.
-      </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 72 }} contentInsetAdjustmentBehavior="automatic">
+      <View
+        style={{
+          backgroundColor: "#fff",
+          padding: 20,
+          borderRadius: 18,
+          shadowColor: "#000",
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 1,
+        }}>
+        <Text style={{ fontSize: 28, fontWeight: "700", color: "#3e2e16" }}>
+          Welcome back{user?.displayName ? `, ${user.displayName}` : ""}!
+        </Text>
+        <Text style={{ marginTop: 4, color: "#666" }}>
+          Keep your hive synced and see what's coming up for you and your busy bee.
+        </Text>
+      </View>
 
       {connectedWith ? (
-        <View style={{ marginTop: 20, padding: 16, backgroundColor: "#fff7ea", borderRadius: 12 }}>
+        <View
+          style={{
+            marginTop: 24,
+            padding: 20,
+            borderRadius: 20,
+            backgroundColor: "#FFF8EF",
+            borderWidth: 1,
+            borderColor: "#F2D3A0",
+
+            // Shadow (iOS)
+            shadowColor: "#000",
+            shadowOpacity: 0.07,
+            shadowRadius: 8,
+            shadowOffset: { width: 0, height: 3 },
+
+            // Elevation (Android)
+            elevation: 3,
+          }}
+        >
           {partnerStatus ? (
             <>
-              <Text style={{ fontWeight: "700" }}>{partnerStatus.label}</Text>
-              <Text style={{ fontSize: 18, marginTop: 4 }}>{partnerStatus.value}</Text>
-              <Text style={{ marginTop: 4, color: "#444" }}>They'll be free at {partnerStatus.freeAt}</Text>
+              {/* Status pill */}
+              <View
+                style={{
+                  alignSelf: "flex-start",
+                  backgroundColor: "#FFE5BA",
+                  paddingHorizontal: 12,
+                  paddingVertical: 4,
+                  borderRadius: 12,
+                  marginBottom: 8,
+                }}>
+                <Text style={{ fontWeight: "600", color: "#9A6A25" }}>
+                  {partnerStatus.label}
+                </Text>
+              </View>
+
+              {/* Main value */}
+              <Text style={{fontWeight: "800",fontSize: 22,color: "#3A2E1F",}}>
+                {partnerStatus.value}
+              </Text>
+
+              {/* Subtext */}
+              <Text style={{ marginTop: 6,  fontSize: 15, color: "#6A5E50",}}>
+                They'll be <Text style={{ fontWeight: "600" }}>{partnerStatus.freeAt}</Text>.
+              </Text>
             </>
           ) : (
-            <Text>We're fetching your partner's calendar...</Text>
+            <Text style={{ fontSize: 16, color: "#444" }}>
+              We're fetching your partner's calendar...
+            </Text>
           )}
         </View>
+
       ) : (
         <View
           style={{
             marginTop: 20,
             padding: 16,
-            borderRadius: 12,
+            borderRadius: 16,
             borderWidth: 1,
-            borderColor: "#f5a524",
+            borderColor: "#f5d8a2",
             backgroundColor: "#fffaf0",
           }}
         >
-          <Text style={{ fontSize: 18, fontWeight: "600" }}>Nobody connected yet.</Text>
-          <Text style={{ marginTop: 4, color: "#555" }}>Let's find another bee :)</Text>
+          <Text style={{ fontSize: 18, fontWeight: "600", color: "#3e2e16" }}>Nobody connected yet.</Text>
+          <Text style={{ marginTop: 4, color: "#6f6146" }}>Let's find another bee!</Text>
           <BusyBeeButton title="Link Calendars" onPress={() => router.push("/link")} />
         </View>
       )}
@@ -245,14 +297,14 @@ export default function HomeTab() {
         </Section>
       ) : null}
 
-      <Section title="What do you need?">
+      {/* <Section title="What do you need?">
         <BusyBeeButton title="Add Event" onPress={() => router.push("/addEvent")} />
         <BusyBeeButton title="View My Calendar" onPress={() => router.push("/(tabs)/calendar")} />
         <BusyBeeButton
           title={connectedWith ? "Manage Linked Calendar" : "Link Calendars"}
           onPress={() => router.push("/link")}
         />
-      </Section>
+      </Section> */}
       </ScrollView>
     </SafeAreaView>
   )

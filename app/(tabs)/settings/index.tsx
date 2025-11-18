@@ -1,8 +1,7 @@
-import { ScrollView, Text, TouchableOpacity, View } from "react-native"
+import { ScrollView, Text, TouchableOpacity, View, Alert } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
-import { BusyBeeButton } from "../../../components/BusyBeeButton"
 import { signOut } from "firebase/auth"
 import { auth } from "../../../lib/firebase"
 import { clearGoogleTokens } from "../../../lib/googleTokens"
@@ -54,6 +53,7 @@ const SettingRow = ({
   </TouchableOpacity>
 )
 
+
 export default function SettingsHome() {
   const router = useRouter()
 
@@ -62,18 +62,34 @@ export default function SettingsHome() {
     router.replace("/")
   }
 
+  const handleClick = () => {
+    Alert.alert("Sign Out?", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Sign Out", style: "destructive", onPress: handleSignOut },
+    ])
+  }
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdfaf3" }}>
-      <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        <View style={{ padding: 20, borderRadius: 18, backgroundColor: "#fff7ea", marginBottom: 16 }}>
-          <Text style={{ fontSize: 24, fontWeight: "700" }}>Settings</Text>
-          <Text style={{ marginTop: 6, color: "#7a6a43" }}>
-            Fine-tune BusyBee so your hive runs smoothly.
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 72 }} contentInsetAdjustmentBehavior="automatic">
+        <View
+          style={{
+            backgroundColor: "#fff",
+            padding: 20,
+            marginBottom: 16,
+            borderRadius: 18,
+            shadowColor: "#000",
+            shadowOpacity: 0.05,
+            shadowRadius: 10,
+            elevation: 1,
+          }}>
+          <Text style={{ fontSize: 28, fontWeight: "700", color: "#3e2e16" }}>
+            Settings
           </Text>
-        </View>
+          <Text style={{ marginTop: 4, color: "#666" }}>
+            Fine-tune your BusyBee experience to keep your hive running smoothly.
+          </Text>
+      </View>
 
         <View
           style={{
@@ -104,7 +120,7 @@ export default function SettingsHome() {
             subtitle="Log out of this device"
             icon="exit-outline"
             color="#c23b3b"
-            onPress={handleSignOut}
+            onPress={handleClick}
           />
         </View>
 

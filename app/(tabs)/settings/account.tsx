@@ -6,7 +6,7 @@ export default function AccountSettings() {
   const { user } = useFirebase()
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdfaf3" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
       <ScrollView
         contentContainerStyle={{ padding: 24, paddingBottom: 80 }}
         contentInsetAdjustmentBehavior="automatic"

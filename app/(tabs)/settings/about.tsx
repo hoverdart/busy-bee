@@ -20,7 +20,7 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 
 export default function AboutSettings() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdfaf3" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
       <ScrollView
         contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
         contentInsetAdjustmentBehavior="automatic"

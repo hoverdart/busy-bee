@@ -108,11 +108,23 @@ export default function CalendarTab() {
     : ROW_HEIGHT
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdfaf3" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
       <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
       <View style={{ flex: 1 }}>
-      <Text style={{ fontSize: 28, fontWeight: "700" }}>My Calendar</Text>
-      <Text style={{ marginTop: 4, color: "#666" }}>Tap a date to view events. Long-press an event to remove it.</Text>
+      <View
+        style={{
+          backgroundColor: "#fff",
+          padding: 20,
+          borderRadius: 18,
+          shadowColor: "#000",
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 1,
+        }}
+      >
+      <Text style={{ fontSize: 28, fontWeight: "700", color: "#3e2e16" }}>My Calendar</Text>
+      <Text style={{ marginTop: 4, color: "#7c6b52" }}>Tap a date to view events. Long-press an event to remove it.</Text>
+      </View>
 
       <View
         style={{

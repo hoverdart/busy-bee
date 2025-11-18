@@ -166,7 +166,7 @@ export const LinkCalendarsPanel = ({
           </Text>
         </>
       ) : null}
-      <BusyBeeButton title={joinCode ? "Regenerate Join Code" : "Generate Join Code"} onPress={handleGenerate} />
+      {!joinCode && <BusyBeeButton title={joinCode ? "Regenerate Join Code" : "Generate Join Code"} onPress={handleGenerate} />}
       {joinCode ? (
         <View
           style={{

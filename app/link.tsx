@@ -4,7 +4,7 @@ import { LinkCalendarsPanel } from "../components/LinkCalendarsPanel"
 
 export default function LinkScreen() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdfaf3" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
       <ScrollView
         contentContainerStyle={{ padding: 24, paddingBottom: 80 }}
         contentInsetAdjustmentBehavior="automatic"

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Alert, Text, TouchableOpacity, View, FlatList, ScrollView } from "react-native"
+import { Alert, Text, TouchableOpacity, View, FlatList } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useCalendar, type CalendarEvent } from "../../context/CalendarProvider"
 import { BusyBeeButton } from "../../components/BusyBeeButton"
@@ -13,6 +13,11 @@ const dateKey = (value: Date | string) => {
   const month = `${d.getMonth() + 1}`.padStart(2, "0")
   const day = `${d.getDate()}`.padStart(2, "0")
   return `${year}-${month}-${day}`
+}
+
+const parseDateKey = (key: string) => {
+  const [year, month, day] = key.split("-").map((part) => Number.parseInt(part, 10))
+  return new Date(year, (month ?? 1) - 1, day ?? 1)
 }
 
 const buildMonthMatrix = (anchor: Date) => {
@@ -62,7 +67,7 @@ export default function CalendarTab() {
   const { events, removeEvent, calendars, toggleCalendar } = useCalendar()
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDateKey, setSelectedDateKey] = useState(dateKey(new Date()))
-  
+  const [filtersExpanded, setFiltersExpanded] = useState(false)
 
   const eventsByDay = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {}
@@ -100,164 +105,189 @@ export default function CalendarTab() {
     setCurrentMonth(next)
   }
 
-  const MAX_VISIBLE = 3
-  const ROW_HEIGHT = 74
-  const flatListHeight =
-  selectedEvents.length > 0
-    ? Math.min(selectedEvents.length, MAX_VISIBLE) * ROW_HEIGHT
-    : ROW_HEIGHT
+  const renderDayCard = () => (
+    <View style={{ paddingTop: 16, justifyContent: "center", alignItems: "center" }}>
+      <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>
+        {parseDateKey(selectedDateKey).toLocaleDateString(undefined, {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+        })}
+      </Text>
+    </View>
+  )
+
+  const renderCalendarFilters = () =>
+    calendars.length ? (
+      <View style={{ marginBottom: 16 }}>
+        <TouchableOpacity
+          onPress={() => setFiltersExpanded((prev) => !prev)}
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingVertical: 10,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: "700", color: "#3e2e16" }}>Select calendars</Text>
+          <Text style={{ fontSize: 18 }}>{filtersExpanded ? "▲" : "▼"}</Text>
+        </TouchableOpacity>
+        {filtersExpanded ? (
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              paddingTop: 8,
+              borderTopWidth: 1,
+              borderColor: "#f0e1c7",
+            }}
+          >
+            {calendars.map((calendar) => (
+              <TouchableOpacity
+                key={calendar.id}
+                onPress={() => toggleCalendar(calendar.id)}
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: calendar.selected ? "#f5a524" : "#e7dcc7",
+                  backgroundColor: calendar.selected ? "#f5a524" : "#fff",
+                  marginRight: 8,
+                  marginBottom: 8,
+                }}
+              >
+                <Text style={{ color: calendar.selected ? "#fff" : "#7a6a43", fontWeight: "600" }}>
+                  {calendar.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
+      </View>
+    ) : null
+
+  const renderFooter = () => (
+    <View style={{ padding: 24, paddingTop: 16 }}>
+      {renderCalendarFilters()}
+      <BusyBeeButton title="Add Event" onPress={() => router.push("/addEvent")} />
+    </View>
+  )
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-      <View style={{ flex: 1 }}>
-      <View
-        style={{
-          backgroundColor: "#fff",
-          padding: 20,
-          borderRadius: 18,
-          shadowColor: "#000",
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
-          elevation: 1,
-        }}
-      >
-      <Text style={{ fontSize: 28, fontWeight: "700", color: "#3e2e16" }}>My Calendar</Text>
-      <Text style={{ marginTop: 4, color: "#7c6b52" }}>Tap a date to view events. Long-press an event to remove it.</Text>
-      </View>
-
-      <View
-        style={{
-          marginTop: 16,
-          padding: 16,
-          borderRadius: 16,
-          backgroundColor: "#fff",
-          shadowColor: "#000",
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
-          elevation: 1,
-        }}
-      >
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <TouchableOpacity onPress={() => changeMonth(-1)}>
-            <Text style={{ fontSize: 18 }}>◀</Text>
-          </TouchableOpacity>
-          <Text style={{ fontSize: 18, fontWeight: "600" }}>
-            {currentMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
-          </Text>
-          <TouchableOpacity onPress={() => changeMonth(1)}>
-            <Text style={{ fontSize: 18 }}>▶</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 12 }}>
-          {daysOfWeek.map((day) => (
-            <Text key={day} style={{ width: "14%", textAlign: "center", fontWeight: "600", color: "#888" }}>
-              {day}
-            </Text>
-          ))}
-        </View>
-
-        <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 8 }}>
-          {monthDays.map((day) => {
-            const key = dateKey(day)
-            const isCurrentMonth = day.getMonth() === currentMonth.getMonth()
-            const isSelected = selectedDateKey === key
-            const hasEvents = !!eventsByDay[key]?.length
-            return (
-              <TouchableOpacity
-                key={key + day.getTime()}
-                onPress={() => {
-                  setSelectedDateKey(key)
-                }}
+      <FlatList
+        data={selectedEvents}
+        keyExtractor={(item, index) => `${item.id}-${new Date(item.start).getTime()}-${index}`}
+        renderItem={({ item }) => <EventRow event={item} onLongPress={handleRemove} />}
+        ListEmptyComponent={
+          <View style={{ paddingHorizontal: 24, paddingBottom: 16 }}>
+            <Text style={{ color: "#777" }}>No events for this day.</Text>
+          </View>
+        }
+        ListHeaderComponent={
+          <>
+            <View style={{ flex: 1 }}>
+              <View
                 style={{
-                  width: "14.28%",
-                  aspectRatio: 1,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 8,
-                  marginVertical: 4,
-                  backgroundColor: isSelected ? "#f5a524" : "transparent",
+                  backgroundColor: "#fff",
+                  padding: 20,
+                  borderRadius: 18,
+                  shadowColor: "#000",
+                  shadowOpacity: 0.05,
+                  shadowRadius: 10,
+                  elevation: 1,
                 }}
               >
-                <Text style={{ color: isCurrentMonth ? (isSelected ? "#fff" : "#222") : "#bbb", fontWeight: "600" }}>
-                  {day.getDate()}
+                <Text style={{ fontSize: 28, fontWeight: "700", color: "#3e2e16" }}>My Calendar</Text>
+                <Text style={{ marginTop: 4, color: "#7c6b52" }}>
+                  Tap a date to view events. Long-press an event to remove it.
                 </Text>
-                {hasEvents ? (
-                  <View
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: isSelected ? "#fff" : "#f5a524",
-                      marginTop: 4,
-                    }}
-                  />
-                ) : null}
-              </TouchableOpacity>
-            )
-          })}
-        </View>
-      </View>
+              </View>
 
-      <View style={{ marginTop: 24 }}>
-        <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>
-          {new Date(selectedDateKey).toLocaleDateString(undefined, {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}
-        </Text>
-      
-        {selectedEvents.length ? (
-          <FlatList
-            data={selectedEvents}
-            keyExtractor={(item, index) =>
-              `${item.id}-${new Date(item.start).getTime()}-${index}`
-            }
-            renderItem={({ item }) => <EventRow event={item} onLongPress={handleRemove} />}
-            style={{ height: flatListHeight }}
-            scrollEnabled={selectedEvents.length > MAX_VISIBLE}
-            contentContainerStyle={{ paddingBottom: 8 }}
-          />
-        ) : (
-          <Text style={{ color: "#777" }}>No events for this day.</Text>
-        )}
+              <View
+                style={{
+                  marginTop: 16,
+                  padding: 16,
+                  borderRadius: 16,
+                  backgroundColor: "#fff",
+                  shadowColor: "#000",
+                  shadowOpacity: 0.05,
+                  shadowRadius: 10,
+                  elevation: 1,
+                }}
+              >
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                  <TouchableOpacity onPress={() => changeMonth(-1)}>
+                    <Text style={{ fontSize: 18 }}>◀</Text>
+                  </TouchableOpacity>
+                  <Text style={{ fontSize: 18, fontWeight: "600"}}>
+                    {currentMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                  </Text>
+                  <TouchableOpacity onPress={() => changeMonth(1)}>
+                    <Text style={{ fontSize: 18 }}>▶</Text>
+                  </TouchableOpacity>
+                </View>
 
-      </View>
-      {calendars.length ? (
-        <>
-      <Text style={{ fontSize: 20, fontWeight: "700", marginTop: 24 }}> Select Calendars </Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 16 }}>
-        {calendars.map((calendar) => (
-          <TouchableOpacity
-            key={calendar.id}
-            onPress={() => toggleCalendar(calendar.id)}
-            style={{
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: calendar.selected ? "#f5a524" : "#e7dcc7",
-              backgroundColor: calendar.selected ? "#f5a524" : "#fff",
-              marginRight: 8,
-              marginBottom: 8,
-            }}
-          >
-            <Text style={{ color: calendar.selected ? "#fff" : "#7a6a43", fontWeight: "600" }}>
-              {calendar.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </>) : null}
+                <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 12 }}>
+                  {daysOfWeek.map((day) => (
+                    <Text key={day} style={{ width: "14%", textAlign: "center", fontWeight: "600", color: "#888" }}>
+                      {day}
+                    </Text>
+                  ))}
+                </View>
 
-        <View style={{ marginTop: 16 }}>
-          <BusyBeeButton title="Add Event" onPress={() => router.push("/addEvent")} />
-        </View>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 8 }}>
+                  {monthDays.map((day) => {
+                    const key = dateKey(day)
+                    const isCurrentMonth = day.getMonth() === currentMonth.getMonth()
+                    const isSelected = selectedDateKey === key
+                    const hasEvents = !!eventsByDay[key]?.length
+                    return (
+                      <TouchableOpacity
+                        key={key + day.getTime()}
+                        onPress={() => {
+                          setSelectedDateKey(key)
+                        }}
+                        style={{
+                          width: "14.28%",
+                          aspectRatio: 1,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: 8,
+                          marginVertical: 4,
+                          backgroundColor: isSelected ? "#f5a524" : "transparent",
+                        }}
+                      >
+                        <Text
+                          style={{ color: isCurrentMonth ? (isSelected ? "#fff" : "#222") : "#bbb", fontWeight: "600" }}
+                        >
+                          {day.getDate()}
+                        </Text>
+                        {hasEvents ? (
+                          <View
+                            style={{
+                              width: 6,
+                              height: 6,
+                              borderRadius: 3,
+                              backgroundColor: isSelected ? "#fff" : "#f5a524",
+                              marginTop: 4,
+                            }}
+                          />
+                        ) : null}
+                      </TouchableOpacity>
+                    )
+                  })}
+                </View>
+              </View>
+            </View>
 
-      </View>
-      </ScrollView>
+            {renderDayCard()}
+          </>
+        }
+        ListFooterComponent={renderFooter}
+        contentContainerStyle={{ paddingBottom: 80, paddingHorizontal: 24 }}
+      />
     </SafeAreaView>
   )
 }

@@ -34,14 +34,14 @@ export default function TabsLayout() {
           borderTopColor: "#f3e3c7",
           height: 64,
           paddingBottom: 8,
-          paddingTop: 8,
+          paddingTop: 4,
         },
         tabBarLabelStyle: { fontWeight: "600", fontSize: 12 },
         sceneStyle: { backgroundColor: "#fdf6e6" },
         tabBarHideOnKeyboard: true,
       }}
     >
-      <Tabs.Screen name="home" options={{ title: "Home", tabBarIcon: tabIcon("home") }} />
+      <Tabs.Screen name="home" options={{ title: "Home", tabBarIcon: tabIcon("home") }}  />
       <Tabs.Screen name="calendar" options={{ title: "My Calendar", tabBarIcon: tabIcon("calendar") }} />
       <Tabs.Screen name="settings" options={{ title: "Settings", tabBarIcon: tabIcon("settings") }} />
     </Tabs>

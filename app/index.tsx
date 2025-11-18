@@ -38,7 +38,7 @@ export default function AuthGate() {
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24 }}>
       <Text style={{ fontSize: 32, fontWeight: "700", marginBottom: 24 }}>🐝 BusyBee</Text>
       <Text style={{ marginBottom: 12, textAlign: "center" }}>
-        We are all the busiest of bees.
+        We buzz around in the busiest of beehives.
       </Text>
       <BusyBeeButton
         title={prompting || googleLoading ? "Signing in..." : "Log in / Sign up with Google"}

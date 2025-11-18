@@ -5,7 +5,9 @@ type EventCardProps = {
   event: CalendarEvent
 }
 
-export const EventCard = ({ event }: EventCardProps) => (
+const formatDate = (d: string | Date) => (d instanceof Date ? d.toLocaleString() : d);
+
+const EventCard: React.FC<EventCardProps> = ({ event }) => (
   <View
     style={{
       padding: 16,
@@ -17,6 +19,7 @@ export const EventCard = ({ event }: EventCardProps) => (
     }}
   >
     <Text style={{ fontWeight: "700" }}>{event.title}</Text>
-    <Text>{event.start} → {event.end}</Text>
+    <Text>{formatDate(event.start)} → {formatDate(event.end)}</Text>
   </View>
 )
+export default EventCard

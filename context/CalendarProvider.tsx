@@ -21,6 +21,7 @@ import { getValidAccessToken } from "../lib/googleTokens"
 export type CalendarEvent = {
   id: string
   title: string
+  description?: string
   start: Date | string
   end: Date | string
   source?: "google" | "manual"
@@ -51,10 +52,16 @@ type CalendarProviderProps = {
   children: ReactNode
 }
 
+const toKeyPart = (value: Date | string | undefined) => {
+  if (!value) return "unknown"
+  if (typeof value === "string") return value
+  return value.toISOString()
+}
+
 const createEventKey = (event: CalendarEvent) =>
-  `${event.id}-${typeof event.start === "string" ? event.start : event.start.toISOString()}-${
-    typeof event.end === "string" ? event.end : event.end.toISOString()
-  }-${event.title}-${event.calendarId ?? "manual"}`
+  `${event.id ?? "event"}-${toKeyPart(event.start)}-${toKeyPart(event.end)}-${event.title ?? "untitled"}-${
+    event.calendarId ?? "manual"
+  }`
 
 const dedupeEvents = (items: CalendarEvent[]) => {
   const seen = new Set<string>()
@@ -76,6 +83,7 @@ const mapGoogleEvents = (items: any[] = [], calendarId: string): CalendarEvent[]
   items.map((event) => ({
     id: event.id ?? Math.random().toString(36).slice(2),
     title: event.summary ?? "BusyBee Event",
+    description: event.description ?? "",
     start: event.start?.dateTime ?? event.start?.date ?? "",
     end: event.end?.dateTime ?? event.end?.date ?? "",
     source: "google",

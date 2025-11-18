@@ -162,7 +162,7 @@ export const LinkCalendarsPanel = ({
         <>
           <Text style={{ fontSize: 20, fontWeight: "700" }}>{heading}</Text>
           <Text style={{ marginTop: 8 }}>
-            Generate a join code so friends or teammates can sync with you.
+            Generate a join code so friends or family can sync with you.
           </Text>
         </>
       ) : null}
@@ -192,6 +192,7 @@ export const LinkCalendarsPanel = ({
             placeholder="Enter join code"
             autoCapitalize="characters"
             value={connectCode}
+            maxLength={5}
             onChangeText={setConnectCode}
             style={{
               borderWidth: 1,

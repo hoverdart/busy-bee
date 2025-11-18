@@ -190,7 +190,7 @@ export default function HomeTab() {
           elevation: 1,
         }}>
         <Text style={{ fontSize: 28, fontWeight: "700", color: "#3e2e16" }}>
-          Welcome back{user?.displayName ? `, ${user.displayName}` : ""}!
+          Welcome Back{user?.displayName ? `, ${user.displayName}` : ""}!
         </Text>
         <Text style={{ marginTop: 4, color: "#666" }}>
           Keep your hive synced and see what's coming up for you and your busy bee.

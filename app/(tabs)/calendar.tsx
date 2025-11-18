@@ -59,7 +59,7 @@ const EventRow = ({
 
 export default function CalendarTab() {
   const router = useRouter()
-  const { events, removeEvent } = useCalendar()
+  const { events, removeEvent, calendars, toggleCalendar } = useCalendar()
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [selectedDateKey, setSelectedDateKey] = useState(dateKey(new Date()))
   
@@ -225,6 +225,32 @@ export default function CalendarTab() {
         )}
 
       </View>
+      {calendars.length ? (
+        <>
+      <Text style={{ fontSize: 20, fontWeight: "700", marginTop: 24 }}> Select Calendars </Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 16 }}>
+        {calendars.map((calendar) => (
+          <TouchableOpacity
+            key={calendar.id}
+            onPress={() => toggleCalendar(calendar.id)}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: calendar.selected ? "#f5a524" : "#e7dcc7",
+              backgroundColor: calendar.selected ? "#f5a524" : "#fff",
+              marginRight: 8,
+              marginBottom: 8,
+            }}
+          >
+            <Text style={{ color: calendar.selected ? "#fff" : "#7a6a43", fontWeight: "600" }}>
+              {calendar.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </>) : null}
 
         <View style={{ marginTop: 16 }}>
           <BusyBeeButton title="Add Event" onPress={() => router.push("/addEvent")} />
@@ -235,3 +261,4 @@ export default function CalendarTab() {
     </SafeAreaView>
   )
 }
+      

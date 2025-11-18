@@ -5,7 +5,7 @@ import { makeRedirectUri, ResponseType } from "expo-auth-session"
 import { GoogleAuthProvider, signInWithCredential } from "firebase/auth"
 import { doc, getDoc, setDoc } from "firebase/firestore"
 import { auth, db } from "./firebase"
-import { loadGoogleCalendarEvents } from "./calendar"
+import { loadGoogleCalendarEvents, loadGoogleCalendars } from "./calendar"
 import { generateUniqueJoinCode } from "./joinCode"
 import { persistGoogleTokens } from "./googleTokens"
 
@@ -19,13 +19,14 @@ const scopes = [
   "https://www.googleapis.com/auth/calendar.events",
 ]
 
-const normalizeEvents = (items: any[] = []) =>
+const normalizeEvents = (items: any[] = [], calendarId: string) =>
   items.map((event) => ({
     id: event.id ?? Math.random().toString(36).slice(2),
     title: event.summary ?? "BusyBee Event",
     start: event.start?.dateTime ?? event.start?.date ?? "",
     end: event.end?.dateTime ?? event.end?.date ?? "",
     source: "google" as const,
+    calendarId,
   }))
 
 const getClientIds = () => ({
@@ -84,8 +85,19 @@ export const useGoogleAuth = () => {
         const credential = GoogleAuthProvider.credential(idToken)
         const userCred = await signInWithCredential(auth, credential)
 
-        const eventsFromGoogle = await loadGoogleCalendarEvents(accessToken)
-        const calendarEvents = normalizeEvents(eventsFromGoogle)
+        const googleCalendars = await loadGoogleCalendars(accessToken)
+        const calendarSources = googleCalendars.map((calendar) => ({
+          id: calendar.id,
+          name: calendar.summary ?? calendar.id,
+          selected: calendar.primary ?? false,
+          primary: calendar.primary ?? false,
+        }))
+        const selectedCalendars = calendarSources.filter((calendar) => calendar.selected)
+        let calendarEvents: ReturnType<typeof normalizeEvents> = []
+        for (const calendar of selectedCalendars) {
+          const eventsFromGoogle = await loadGoogleCalendarEvents(accessToken, calendar.id)
+          calendarEvents = [...calendarEvents, ...normalizeEvents(eventsFromGoogle, calendar.id)]
+        }
 
         const userRef = doc(db, "users", userCred.user.uid)
         const snapshot = await getDoc(userRef)
@@ -99,6 +111,7 @@ export const useGoogleAuth = () => {
             displayName: userCred.user.displayName,
             photoURL: userCred.user.photoURL,
             calendarEvents,
+            calendars: calendarSources,
             lastSyncedAt: new Date().toISOString(),
             joinCode,
             calendarOwner: userCred.user.uid,

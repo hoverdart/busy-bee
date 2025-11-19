@@ -4,7 +4,7 @@
     "slug": "busy-bee",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/favicon.png",
+    "icon": "./assets/Favicon.png",
     "scheme": "com.googleusercontent.apps.319228771674-2bkrrf785dsch58uhpt35rvh20g1rtrb",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -18,7 +18,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "backgroundImage": "./assets/images/favicon.png"
+        "backgroundImage": "./assets/Favicon.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -26,7 +26,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/Favicon.png"
     },
     "plugins": [
       "expo-router",

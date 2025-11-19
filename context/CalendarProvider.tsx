@@ -44,6 +44,7 @@ type CalendarContextValue = {
   removeEvent: (event: CalendarEvent) => Promise<void>
   calendars: UserCalendarSource[]
   toggleCalendar: (calendarId: string) => Promise<void>
+  reload: () => Promise<void>
 }
 
 export const CalendarContext = createContext<CalendarContextValue | undefined>(undefined)
@@ -276,7 +277,9 @@ export const CalendarProvider = ({ children }: CalendarProviderProps) => {
   )
 
   return (
-    <CalendarContext.Provider value={{ events, loading, addEvent, removeEvent, calendars, toggleCalendar }}>
+    <CalendarContext.Provider
+      value={{ events, loading, addEvent, removeEvent, calendars, toggleCalendar, reload: load }}
+    >
       {children}
     </CalendarContext.Provider>
   )

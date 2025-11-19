@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { View, Text, TextInput, Alert, TouchableOpacity } from "react-native"
 import { BusyBeeButton } from "./BusyBeeButton"
 import { useFirebase } from "../context/FirebaseProvider"
+import { useCalendar } from "../context/CalendarProvider"
 import { db } from "../lib/firebase"
 import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore"
 import { generateUniqueJoinCode } from "../lib/joinCode"
@@ -16,6 +17,7 @@ export const LinkCalendarsPanel = ({
   showHeading = true,
 }: LinkCalendarsPanelProps) => {
   const { user } = useFirebase()
+  const { reload } = useCalendar()
   const [joinCode, setJoinCode] = useState("")
   const [connectCode, setConnectCode] = useState("")
   const [status, setStatus] = useState("")
@@ -114,6 +116,8 @@ export const LinkCalendarsPanel = ({
       ),
     ])
 
+    await reload()
+
     setConnectedWith(partner.id)
     const data = partner.data()
     setPartnerInfo({
@@ -133,6 +137,7 @@ export const LinkCalendarsPanel = ({
       ),
       setDoc(doc(db, "users", connectedWith), { connected: null, connectedWith: null }, { merge: true }),
     ])
+    await reload()
     setConnectedWith(null)
     setPartnerInfo(null)
     setStatus("Calendars disconnected.")

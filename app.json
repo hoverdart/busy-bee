@@ -5,7 +5,10 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/Favicon.png",
-    "scheme": "com.googleusercontent.apps.319228771674-2bkrrf785dsch58uhpt35rvh20g1rtrb",
+    "scheme": [
+      "com.googleusercontent.apps.319228771674-2bkrrf785dsch58uhpt35rvh20g1rtrb",
+      "com.googleusercontent.apps.319228771674-mmaklit01o41n04os9d5076i0bca6le5"
+    ],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

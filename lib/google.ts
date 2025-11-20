@@ -8,6 +8,7 @@ import { auth, db } from "./firebase"
 import { loadGoogleCalendarEvents, loadGoogleCalendars } from "./calendar"
 import { generateUniqueJoinCode } from "./joinCode"
 import { persistGoogleTokens } from "./googleTokens"
+import { Platform } from "react-native"
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -42,8 +43,10 @@ export const useGoogleAuth = () => {
   const [error, setError] = useState<string | null>(null)
   const redirectUri = makeRedirectUri({
     native:
-      process.env.GOOGLE_OAUTH_SCHEME_REDIRECT ??
-      "com.googleusercontent.apps.319228771674-2bkrrf785dsch58uhpt35rvh20g1rtrb:/oauthredirect",
+      Platform.OS === "ios" ? 
+      "com.googleusercontent.apps.319228771674-2bkrrf785dsch58uhpt35rvh20g1rtrb:/oauthredirect" // iOS client ID
+      :
+      "com.googleusercontent.apps.319228771674-mmaklit01o41n04os9d5076i0bca6le5:/oauthredirect",
   })
 
   const [request, response, promptAsync] = Google.useAuthRequest({

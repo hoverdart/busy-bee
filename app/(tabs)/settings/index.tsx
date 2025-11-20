@@ -71,7 +71,7 @@ export default function SettingsHome() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 72 }} contentInsetAdjustmentBehavior="automatic">
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 72 }} contentInsetAdjustmentBehavior="automatic">
         <View
           style={{
             backgroundColor: "#fff",

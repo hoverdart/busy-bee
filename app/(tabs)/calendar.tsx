@@ -32,13 +32,7 @@ const buildMonthMatrix = (anchor: Date) => {
   return days
 }
 
-const EventRow = ({
-  event,
-  onLongPress,
-}: {
-  event: CalendarEvent
-  onLongPress: (event: CalendarEvent) => void
-}) => {
+const EventRow = ({event,onLongPress,}: {event: CalendarEvent, onLongPress: (event: CalendarEvent) => void}) => {
   const start = event.start instanceof Date ? event.start : new Date(event.start)
   const end = event.end instanceof Date ? event.end : new Date(event.end)
   return (
@@ -187,11 +181,11 @@ export default function CalendarTab() {
         }
         ListHeaderComponent={
           <>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, paddingTop: 24 }}>
               <View
                 style={{
                   backgroundColor: "#fff",
-                  padding: 20,
+                  padding: 24,
                   borderRadius: 18,
                   shadowColor: "#000",
                   shadowOpacity: 0.05,
@@ -286,7 +280,7 @@ export default function CalendarTab() {
           </>
         }
         ListFooterComponent={renderFooter}
-        contentContainerStyle={{ paddingBottom: 80, paddingHorizontal: 24 }}
+        contentContainerStyle={{ paddingBottom: 72, paddingHorizontal: 24 }}
       />
     </SafeAreaView>
   )

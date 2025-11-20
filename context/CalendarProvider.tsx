@@ -53,10 +53,19 @@ type CalendarProviderProps = {
   children: ReactNode
 }
 
-const toKeyPart = (value: Date | string | undefined) => {
+const toKeyPart = (value: Date | string | { toDate?: () => Date } | undefined) => {
   if (!value) return "unknown"
   if (typeof value === "string") return value
-  return value.toISOString()
+  if (value instanceof Date) return value.toISOString()
+
+  if (typeof value === "object" && typeof value.toDate === "function") {
+    const dateValue = value.toDate()
+    if (dateValue instanceof Date) {
+      return dateValue.toISOString()
+    }
+  }
+
+  return "unknown"
 }
 
 const createEventKey = (event: CalendarEvent) =>

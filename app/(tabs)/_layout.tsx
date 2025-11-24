@@ -1,5 +1,6 @@
 import { Redirect, Tabs } from "expo-router"
 import { ActivityIndicator, View } from "react-native"
+import tw from "twrnc"
 import { Ionicons } from "@expo/vector-icons"
 import { useFirebase } from "../../context/FirebaseProvider"
 
@@ -13,7 +14,7 @@ export default function TabsLayout() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#fdf6e6" }}>
+      <View style={tw`flex-1 justify-center items-center bg-[#fdf6e6]`}>
         <ActivityIndicator color="#f5a524" />
       </View>
     )
@@ -29,15 +30,9 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: "#f5a524",
         tabBarInactiveTintColor: "#c5baa2",
-        tabBarStyle: {
-          backgroundColor: "#fff",
-          borderTopColor: "#f3e3c7",
-          height: 64,
-          paddingBottom: 8,
-          paddingTop: 4,
-        },
-        tabBarLabelStyle: { fontWeight: "600", fontSize: 12 },
-        sceneStyle: { backgroundColor: "#fdf6e6" },
+        tabBarStyle: tw`bg-white border-t border-[#f3e3c7] h-[64px] pb-2 pt-1`,
+        tabBarLabelStyle: tw`font-semibold text-[12px]`,
+        sceneStyle: tw`bg-[#fdf6e6]`,
         tabBarHideOnKeyboard: true,
       }}
     >

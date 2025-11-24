@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>busy-bee</string>
+    <string>Busy Bee</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,8 +27,9 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>busybee</string>
-          <string>com.anonymous.busy-bee</string>
+          <string>com.googleusercontent.apps.319228771674-2bkrrf785dsch58uhpt35rvh20g1rtrb</string>
+          <string>com.googleusercontent.apps.319228771674-mmaklit01o41n04os9d5076i0bca6le5</string>
+          <string>com.shauryaverma.busybee</string>
         </array>
       </dict>
       <dict>

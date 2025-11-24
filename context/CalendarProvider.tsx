@@ -7,10 +7,11 @@ import {
   useContext,
   useRef,
 } from "react"
-import { arrayUnion, doc, getDoc, setDoc } from "firebase/firestore"
+import { doc, getDoc, setDoc } from "firebase/firestore"
 import { db } from "../lib/firebase"
 import { useFirebase } from "./FirebaseProvider"
 import {
+  createGoogleCalendarEvent,
   deleteGoogleCalendarEvent,
   loadGoogleCalendarEvents,
   loadGoogleCalendars,
@@ -89,6 +90,17 @@ const dedupeEvents = (items: CalendarEvent[]) => {
   return cleaned
 }
 
+const toDate = (value: Date | string) => (value instanceof Date ? value : new Date(value))
+
+const prunePastEvents = (items: CalendarEvent[]) => {
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  return items.filter((event) => {
+    const start = toDate(event.start)
+    return start >= startOfToday
+  })
+}
+
 const mapGoogleEvents = (items: any[] = [], calendarId: string): CalendarEvent[] =>
   items.map((event) => ({
     id: event.id ?? Math.random().toString(36).slice(2),
@@ -136,7 +148,7 @@ export const CalendarProvider = ({ children }: CalendarProviderProps) => {
     if (snapshot.exists()) {
       const data = snapshot.data()
       const storedEvents = (data?.calendarEvents as CalendarEvent[]) ?? []
-      const deduped = dedupeEvents(storedEvents)
+      const deduped = prunePastEvents(dedupeEvents(storedEvents))
       if (deduped.length !== storedEvents.length) {
         await setDoc(
           docRef,
@@ -160,22 +172,50 @@ export const CalendarProvider = ({ children }: CalendarProviderProps) => {
     async (event: CalendarEventInput) => {
       if (!user) return
       const docRef = doc(db, "users", user.uid)
+      const isManual = (event.calendarId ?? "manual") === "manual"
+      let googleEventId: string | undefined
+
+      if (!isManual) {
+        const accessToken = await getValidAccessToken()
+        if (accessToken) {
+          try {
+            const created = await createGoogleCalendarEvent(accessToken, event.calendarId ?? "", {
+              title: event.title,
+              description: event.description,
+              start: event.start,
+              end: event.end,
+            })
+            googleEventId = created.id
+          } catch (err) {
+            console.warn("Failed to create Google event, storing locally instead", err)
+          }
+        }
+      }
+
       const newEvent: CalendarEvent = {
-        id: Date.now().toString(),
-        source: event.source ?? "manual",
-        calendarId: event.calendarId ?? "manual",
+        id: googleEventId ?? Date.now().toString(),
+        source: isManual ? "manual" : "google",
+        calendarId: isManual ? "manual" : event.calendarId,
         ...event,
       }
+
+      const nextEvents = prunePastEvents(dedupeEvents([...events, newEvent]))
+
       await setDoc(
         docRef,
         {
-          calendarEvents: arrayUnion(newEvent),
+          calendarEvents: nextEvents,
         },
         { merge: true }
       )
+
+      setEvents(nextEvents)
+
+      // Refresh from Google to pick up any server-side changes
+      await syncGoogleEvents(calendars)
       await load()
     },
-    [load, user]
+    [calendars, events, load, user]
   )
 
   const removeEvent = useCallback(
@@ -208,47 +248,49 @@ export const CalendarProvider = ({ children }: CalendarProviderProps) => {
 
   const syncGoogleEvents = useCallback(
     async (overrideCalendars?: UserCalendarSource[]) => {
-    if (!user || syncingRef.current) return
-    const accessToken = await getValidAccessToken()
-    if (!accessToken) return
-    syncingRef.current = true
-    try {
-      const docRef = doc(db, "users", user.uid)
-      const [calendarList, snapshot] = await Promise.all([loadGoogleCalendars(accessToken), getDoc(docRef)])
-      const existingCalendars = overrideCalendars ?? ((snapshot.data()?.calendars as UserCalendarSource[]) ?? [])
-      const mergedCalendars = mergeCalendars(existingCalendars, calendarList)
-      const existing = snapshot.exists() ? ((snapshot.data()?.calendarEvents as CalendarEvent[]) ?? []) : []
-      const manualEvents = existing
-        .filter((event) => event.source !== "google")
-        .map((event) =>
-          event.source ? { ...event, calendarId: event.calendarId ?? "manual" } : { ...event, source: "manual", calendarId: "manual" }
+      if (!user || syncingRef.current) return
+      const accessToken = await getValidAccessToken()
+      if (!accessToken) return
+      syncingRef.current = true
+      try {
+        const docRef = doc(db, "users", user.uid)
+        const [calendarList, snapshot] = await Promise.all([loadGoogleCalendars(accessToken), getDoc(docRef)])
+        const existingCalendars = overrideCalendars ?? ((snapshot.data()?.calendars as UserCalendarSource[]) ?? [])
+        const mergedCalendars = mergeCalendars(existingCalendars, calendarList)
+        const existing = snapshot.exists() ? ((snapshot.data()?.calendarEvents as CalendarEvent[]) ?? []) : []
+        const manualEvents = existing
+          .filter((event) => event.source !== "google")
+          .map((event) =>
+            event.source
+              ? { ...event, calendarId: event.calendarId ?? "manual" }
+              : { ...event, source: "manual", calendarId: "manual" }
+          )
+
+        const googleEvents: CalendarEvent[] = []
+        const selectedCalendars = mergedCalendars.filter((calendar) => calendar.selected)
+        for (const calendar of selectedCalendars) {
+          const items = await loadGoogleCalendarEvents(accessToken, calendar.id)
+          googleEvents.push(...mapGoogleEvents(items, calendar.id))
+        }
+
+        const merged = prunePastEvents(dedupeEvents([...manualEvents, ...googleEvents]))
+        await setDoc(
+          docRef,
+          {
+            calendarEvents: merged,
+            calendars: mergedCalendars,
+            lastSyncedAt: new Date().toISOString(),
+          },
+          { merge: true }
         )
-
-      const googleEvents: CalendarEvent[] = []
-      const selectedCalendars = mergedCalendars.filter((calendar) => calendar.selected)
-      for (const calendar of selectedCalendars) {
-        const items = await loadGoogleCalendarEvents(accessToken, calendar.id)
-        googleEvents.push(...mapGoogleEvents(items, calendar.id))
+        setCalendars(mergedCalendars)
+        setEvents(merged)
+      } catch (err) {
+        console.warn("Google calendar sync failed", err)
+      } finally {
+        syncingRef.current = false
       }
-
-      const merged = dedupeEvents([...manualEvents, ...googleEvents])
-      await setDoc(
-        docRef,
-        {
-          calendarEvents: merged,
-          calendars: mergedCalendars,
-          lastSyncedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      )
-      setCalendars(mergedCalendars)
-      setEvents(merged)
-    } catch (err) {
-      console.warn("Google calendar sync failed", err)
-    } finally {
-      syncingRef.current = false
-    }
-  },
+    },
     [user]
   )
 
@@ -281,14 +323,13 @@ export const CalendarProvider = ({ children }: CalendarProviderProps) => {
         { merge: true }
       )
       await syncGoogleEvents(updated)
+      await load()
     },
-    [calendars, syncGoogleEvents, user]
+    [calendars, load, syncGoogleEvents, user]
   )
 
   return (
-    <CalendarContext.Provider
-      value={{ events, loading, addEvent, removeEvent, calendars, toggleCalendar, reload: load }}
-    >
+    <CalendarContext.Provider value={{ events, loading, addEvent, removeEvent, calendars, toggleCalendar, reload: load }}>
       {children}
     </CalendarContext.Provider>
   )

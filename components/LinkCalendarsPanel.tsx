@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react"
 import { View, Text, TextInput, Alert, TouchableOpacity } from "react-native"
+import tw from "twrnc"
 import { BusyBeeButton } from "./BusyBeeButton"
 import { useFirebase } from "../context/FirebaseProvider"
 import { useCalendar } from "../context/CalendarProvider"
 import { db } from "../lib/firebase"
-import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore"
+import { arrayUnion, arrayRemove, collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore"
 import { generateUniqueJoinCode } from "../lib/joinCode"
 
 type LinkCalendarsPanelProps = {
@@ -12,44 +13,64 @@ type LinkCalendarsPanelProps = {
   showHeading?: boolean
 }
 
-export const LinkCalendarsPanel = ({
-  heading = "Share Your Calendar",
-  showHeading = true,
-}: LinkCalendarsPanelProps) => {
+export type PartnerConnection = {
+  id: string
+  name?: string
+  email?: string
+  joinCode?: string | null
+}
+
+const ensureArray = <T,>(value: T | T[] | null | undefined): T[] => {
+  if (!value) return []
+  return Array.isArray(value) ? value.filter(Boolean) : [value]
+}
+
+export const LinkCalendarsPanel = ({ heading = "Share Your Calendar", showHeading = true }: LinkCalendarsPanelProps) => {
   const { user } = useFirebase()
   const { reload } = useCalendar()
   const [joinCode, setJoinCode] = useState("")
-  const [connectCode, setConnectCode] = useState("")
+  const [connectCodeInput, setConnectCodeInput] = useState("")
   const [status, setStatus] = useState("")
-  const [connectedWith, setConnectedWith] = useState<string | null>(null)
-  const [partnerInfo, setPartnerInfo] = useState<{ name?: string; email?: string } | null>(null)
+  const [connectedWith, setConnectedWith] = useState<string[]>([])
+  const [connections, setConnections] = useState<PartnerConnection[]>([])
 
   useEffect(() => {
     const load = async () => {
-      if (!user) return
+      if (!user) {
+        setJoinCode("")
+        setConnectedWith([])
+        setConnections([])
+        return
+      }
       const snapshot = await getDoc(doc(db, "users", user.uid))
       if (snapshot.exists()) {
         const data = snapshot.data()
         setJoinCode(data.joinCode ?? "")
-        const partnerId = data.connectedWith ?? null
-        setConnectedWith(partnerId)
+        const partnerIds = ensureArray<string>(data.connectedWith as string[] | string | null | undefined)
+        setConnectedWith(partnerIds)
 
-        if (partnerId) {
-          const partnerSnap = await getDoc(doc(db, "users", partnerId))
-          if (partnerSnap.exists()) {
-            const partnerData = partnerSnap.data()
-            setPartnerInfo({
-              name: (partnerData.displayName as string | undefined) ?? undefined,
-              email: (partnerData.email as string | undefined) ?? undefined,
+        if (partnerIds.length) {
+          const partnerSnaps = await Promise.all(
+            partnerIds.map(async (partnerId) => {
+              const partnerSnap = await getDoc(doc(db, "users", partnerId))
+              if (!partnerSnap.exists()) return null
+              const partnerData = partnerSnap.data()
+              return {
+                id: partnerId,
+                name: (partnerData.displayName as string | undefined) ?? undefined,
+                email: (partnerData.email as string | undefined) ?? undefined,
+                joinCode: (partnerData.joinCode as string | undefined) ?? null,
+              }
             })
-          } else {
-            setPartnerInfo(null)
-          }
+          )
+          setConnections(partnerSnaps.filter(Boolean) as PartnerConnection[])
         } else {
-          setPartnerInfo(null)
+          setConnections([])
         }
       } else {
-        setPartnerInfo(null)
+        setConnections([])
+        setConnectedWith([])
+        setJoinCode("")
       }
     }
     load()
@@ -78,11 +99,11 @@ export const LinkCalendarsPanel = ({
       setStatus("Please sign in first.")
       return
     }
-    if (!connectCode.trim()) {
+    if (!connectCodeInput.trim()) {
       setStatus("Enter a join code to connect.")
       return
     }
-    const code = connectCode.trim().toUpperCase()
+    const code = connectCodeInput.trim().toUpperCase()
     if (code === joinCode) {
       setStatus("You cannot connect to your own join code.")
       return
@@ -100,17 +121,32 @@ export const LinkCalendarsPanel = ({
       return
     }
 
+    const partnerData = partner.data()
+    const partnerConnections = ensureArray<string>(
+      partnerData.connectedWith as string[] | string | null | undefined
+    )
+    if (partnerConnections.includes(user.uid)) {
+      setStatus("You are already connected to this calendar.")
+      return
+    }
+    if (connectedWith.includes(partner.id)) {
+      setStatus("You are already connected to this calendar.")
+      return
+    }
+
+    const partnerJoinCode = (partnerData.joinCode as string | undefined) ?? code
+
     await Promise.all([
       setDoc(
         doc(db, "users", user.uid),
-        { connected: code, connectedWith: partner.id },
+        { connected: arrayUnion(code), connectedWith: arrayUnion(partner.id) },
         { merge: true }
       ),
       setDoc(
         doc(db, "users", partner.id),
         {
-          connected: joinCode || null,
-          connectedWith: user.uid,
+          connected: arrayUnion(joinCode || null),
+          connectedWith: arrayUnion(user.uid),
         },
         { merge: true }
       ),
@@ -118,129 +154,124 @@ export const LinkCalendarsPanel = ({
 
     await reload()
 
-    setConnectedWith(partner.id)
-    const data = partner.data()
-    setPartnerInfo({
-      name: (data.displayName as string | undefined) ?? undefined,
-      email: (data.email as string | undefined) ?? undefined,
+    setConnectedWith((prev) => (prev.includes(partner.id) ? prev : [...prev, partner.id]))
+    setConnections((prev) => {
+      if (prev.some((existing) => existing.id === partner.id)) return prev
+      return [
+        ...prev,
+        {
+          id: partner.id,
+          name: (partnerData.displayName as string | undefined) ?? undefined,
+          email: (partnerData.email as string | undefined) ?? undefined,
+          joinCode: partnerJoinCode,
+        },
+      ]
     })
+    setConnectCodeInput("")
     setStatus("Calendars connected! You can now share schedules.")
   }
 
-  const handleConfirmUnlink = async () => {
-    if (!user || !connectedWith) return
+  const handleConfirmUnlink = async (partner: PartnerConnection) => {
+    if (!user) return
+    const userUpdates: Record<string, any> = {
+      connectedWith: arrayRemove(partner.id),
+    }
+    if (partner.joinCode) {
+      userUpdates.connected = arrayRemove(partner.joinCode)
+    }
+    const partnerUpdates: Record<string, any> = {
+      connectedWith: arrayRemove(user.uid),
+    }
+    if (joinCode) {
+      partnerUpdates.connected = arrayRemove(joinCode)
+    }
     await Promise.all([
-      setDoc(
-        doc(db, "users", user.uid),
-        { connected: null, connectedWith: null },
-        { merge: true }
-      ),
-      setDoc(doc(db, "users", connectedWith), { connected: null, connectedWith: null }, { merge: true }),
+      setDoc(doc(db, "users", user.uid), userUpdates, { merge: true }),
+      setDoc(doc(db, "users", partner.id), partnerUpdates, { merge: true }),
     ])
     await reload()
-    setConnectedWith(null)
-    setPartnerInfo(null)
+    setConnectedWith((prev) => prev.filter((id) => id !== partner.id))
+    setConnections((prev) => prev.filter((existing) => existing.id !== partner.id))
     setStatus("Calendars disconnected.")
   }
 
-  const handleUnlink = () => {
-    Alert.alert("Unlink calendars?", "Are you sure you want to disconnect this calendar link?", [
+  const handleUnlink = (partner: PartnerConnection) => {
+    const partnerLabel = partner.name ?? partner.email ?? "this calendar"
+    Alert.alert("Unlink calendars?", `Disconnect from ${partnerLabel}?`, [
       { text: "Cancel", style: "cancel" },
-      { text: "Unlink", style: "destructive", onPress: handleConfirmUnlink },
+      { text: "Unlink", style: "destructive", onPress: () => handleConfirmUnlink(partner) },
     ])
   }
 
-  const partnerLabel = partnerInfo?.name ?? partnerInfo?.email ?? "BusyBee user"
+  const hasConnections = connections.length > 0
 
   return (
     <View
-      style={{
-        padding: 18,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: "#f0e7d8",
-        backgroundColor: connectedWith ? "#fff9e8" : "#fff",
-        marginTop: 24,
-      }}
+      style={[
+        tw`p-[18px] rounded-2xl border border-[#f0e7d8] mt-6`,
+        hasConnections ? tw`bg-[#fff9e8]` : tw`bg-white`,
+      ]}
     >
       {showHeading ? (
         <>
-          <Text style={{ fontSize: 20, fontWeight: "700" }}>{heading}</Text>
-          <Text style={{ marginTop: 8 }}>
-            Generate a join code so friends or family can sync with you.
-          </Text>
+          <Text style={tw`text-xl font-bold`}>{heading}</Text>
+          <Text style={tw`mt-2`}>Generate a join code so friends or family can sync with you.</Text>
         </>
       ) : null}
       {!joinCode && <BusyBeeButton title={joinCode ? "Regenerate Join Code" : "Generate Join Code"} onPress={handleGenerate} />}
       {joinCode ? (
         <View
-          style={{
-            marginTop: 12,
-            padding: 12,
-            borderRadius: 12,
-            backgroundColor: "#fff",
-            borderWidth: 1,
-            borderColor: "#f0e7d8",
-          }}
+          style={tw`mt-3 p-3 rounded-xl bg-white border border-[#f0e7d8]`}
         >
-          <Text style={{ fontWeight: "600", color: "#7a6a43" }}>Your join code</Text>
-          <Text style={{ fontSize: 24, letterSpacing: 1, fontWeight: "800", marginTop: 4 }}>{joinCode}</Text>
+          <Text style={tw`font-semibold text-[#7a6a43]`}>Your join code</Text>
+          <Text style={tw`text-2xl tracking-[1px] font-extrabold mt-1`}>{joinCode}</Text>
         </View>
       ) : null}
 
       
-
-      {!connectedWith ? (
-        <>
-          <Text style={{ fontSize: 16, fontWeight: "700", marginTop: 20 }}>Connect to a friend</Text>
-          <TextInput
-            placeholder="Enter join code"
-            autoCapitalize="characters"
-            value={connectCode}
-            maxLength={5}
-            onChangeText={setConnectCode}
-            style={{
-              borderWidth: 1,
-              borderColor: "#ccc",
-              padding: 12,
-              borderRadius: 8,
-              marginVertical: 12,
-            }}
-          />
-          <BusyBeeButton title="Connect Calendars" onPress={handleConnect} />
-        </>
-      ) : (
+      {hasConnections ? (
         <View
-          style={{
-            marginTop: 20,
-            padding: 12,
-            borderRadius: 12,
-            backgroundColor: "#fff",
-            borderWidth: 1,
-            borderColor: "#f0e7d8",
-          }}
+          style={tw`mt-5 p-3 rounded-xl bg-white border border-[#f0e7d8]`}
         >
-          <Text style={{ fontWeight: "600", color: "#7a6a43" }}>You're connected!</Text>
-          <Text style={{ marginTop: 4, fontSize: 16 }}>
-            {partnerLabel}
-            <Text style={{ color: "#999" }}> ({connectedWith})</Text>
-          </Text>
-          <TouchableOpacity
-            onPress={handleUnlink}
-            style={{
-              marginTop: 12,
-              paddingVertical: 8,
-              borderRadius: 8,
-              backgroundColor: "#ffe6e6",
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "#c23b3b", fontWeight: "700" }}>Unlink calendars</Text>
-          </TouchableOpacity>
+          <Text style={tw`font-semibold text-[#7a6a43]`}>Connected calendars</Text>
+          {connections.map((partner) => {
+            const partnerLabel = partner.name ?? partner.email ?? "BusyBee user"
+            return (
+              <View
+                key={partner.id}
+                style={tw`mt-3 border border-[#f0e7d8] rounded-lg p-[10px] bg-[#fffdf5]`}
+              >
+                <Text style={tw`mt-1 text-base`}>
+                  {partnerLabel}
+                  <Text style={tw`text-[#999]`}> ({partner.id})</Text>
+                </Text>
+                <TouchableOpacity
+                  onPress={() => handleUnlink(partner)}
+                  style={tw`mt-3 py-2 rounded-lg bg-[#ffe6e6] items-center`}
+                >
+                  <Text style={tw`text-[#c23b3b] font-bold`}>Unlink calendars</Text>
+                </TouchableOpacity>
+              </View>
+            )
+          })}
         </View>
+      ) : (
+        <Text style={tw`mt-4 text-[#7a6a43]`}>No linked calendars yet.</Text>
       )}
 
-      {status ? <Text style={{ marginTop: 12, color: "#5c5131" }}>{status}</Text> : null}
+
+      <Text style={tw`text-lg font-bold mt-5`}>Connect to a friend</Text>
+      <TextInput
+        placeholder="Enter join code"
+        autoCapitalize="characters"
+        value={connectCodeInput}
+        maxLength={5}
+        onChangeText={setConnectCodeInput}
+        style={tw`border border-[#ccc] p-3 rounded-lg my-3`}
+      />
+      
+      <BusyBeeButton title="Connect Calendars" onPress={handleConnect} />
+      {status ? <Text style={tw`mt-3 text-[#5c5131]`}>{status}</Text> : null}
     </View>
   )
 }

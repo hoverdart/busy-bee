@@ -1,4 +1,5 @@
 import { ScrollView, Text, TouchableOpacity, View, Alert } from "react-native"
+import tw from "twrnc"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
@@ -22,31 +23,15 @@ const SettingRow = ({
 }) => (
   <TouchableOpacity
     onPress={onPress}
-    style={{
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      paddingVertical: 16,
-      borderBottomWidth: 1,
-      borderColor: "#f0e7d8",
-    }}
+    style={tw`flex-row items-center justify-between py-4 border-b border-[#f0e7d8]`}
   >
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
-      <View
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 12,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#fff5dd",
-        }}
-      >
+    <View style={tw`flex-row items-center gap-3 flex-1`}>
+      <View style={tw`w-10 h-10 rounded-xl items-center justify-center bg-[#fff5dd]`}>
         <Ionicons name={icon} size={20} color={color} />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16, fontWeight: "600", color }}>{title}</Text>
-        {subtitle ? <Text style={{ fontSize: 13, color: "#777" }}>{subtitle}</Text> : null}
+      <View style={tw`flex-1`}>
+        <Text style={[tw`text-base font-semibold`, { color }]}>{title}</Text>
+        {subtitle ? <Text style={tw`text-[13px] text-[#777]`}>{subtitle}</Text> : null}
       </View>
     </View>
     <Ionicons name="chevron-forward-outline" size={18} color="#bbb" />
@@ -70,39 +55,16 @@ export default function SettingsHome() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
-      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 72 }} contentInsetAdjustmentBehavior="automatic">
-        <View
-          style={{
-            backgroundColor: "#fff",
-            padding: 20,
-            marginBottom: 16,
-            borderRadius: 18,
-            shadowColor: "#000",
-            shadowOpacity: 0.05,
-            shadowRadius: 10,
-            elevation: 1,
-          }}>
-          <Text style={{ fontSize: 28, fontWeight: "700", color: "#3e2e16" }}>
-            Settings
-          </Text>
-          <Text style={{ marginTop: 4, color: "#666" }}>
+    <SafeAreaView style={tw`flex-1 bg-[#fdf6e6]`}>
+      <ScrollView contentContainerStyle={tw`p-6 pb-18`} contentInsetAdjustmentBehavior="automatic">
+        <View style={tw`bg-white p-5 mb-4 rounded-[18px] shadow-sm elevation-1`}>
+          <Text style={tw`text-[28px] font-bold text-[#3e2e16]`}>Settings</Text>
+          <Text style={tw`mt-1 text-[#666]`}>
             Fine-tune your BusyBee experience to keep your hive running smoothly.
           </Text>
-      </View>
+        </View>
 
-        <View
-          style={{
-            borderRadius: 18,
-            backgroundColor: "#fff",
-            paddingHorizontal: 20,
-            paddingBottom: 4,
-            shadowColor: "#000",
-            shadowOpacity: 0.04,
-            shadowRadius: 12,
-            elevation: 1,
-          }}
-        >
+        <View style={tw`rounded-[18px] bg-white px-5 pb-1 shadow-sm elevation-1`}>
           <SettingRow
             title="Account"
             subtitle="Manage your profile details"

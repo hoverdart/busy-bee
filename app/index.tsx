@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { ActivityIndicator, Text, View } from "react-native"
+import tw from "twrnc"
 import { BusyBeeButton } from "../components/BusyBeeButton"
 import { useRouter } from "expo-router"
 import { useFirebase } from "../context/FirebaseProvider"
@@ -28,23 +29,23 @@ export default function AuthGate() {
 
   if (loading || user) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View style={tw`flex-1 justify-center items-center`}>
         <ActivityIndicator />
       </View>
     )
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24 }}>
-      <Text style={{ fontSize: 32, fontWeight: "700", marginBottom: 24 }}>🐝 BusyBee</Text>
-      <Text style={{ marginBottom: 12, textAlign: "center" }}>
+    <View style={tw`flex-1 justify-center items-center p-6`}>
+      <Text style={tw`text-[32px] font-bold mb-6`}>🐝 BusyBee</Text>
+      <Text style={tw`mb-3 text-center`}>
         We buzz around in the busiest of beehives.
       </Text>
       <BusyBeeButton
         title={prompting || googleLoading ? "Signing in..." : "Log in / Sign up with Google"}
         onPress={handleSignIn}
       />
-      {error ? <Text style={{ color: "red", marginTop: 12 }}>{error}</Text> : null}
+      {error ? <Text style={tw`text-red-600 mt-3`}>{error}</Text> : null}
     </View>
   )
 }

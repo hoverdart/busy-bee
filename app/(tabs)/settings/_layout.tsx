@@ -1,12 +1,13 @@
 import { Stack } from "expo-router"
+import tw from "twrnc"
 
 export default function SettingsLayout() {
   return (
     <Stack
       screenOptions={{
         headerShadowVisible: false,
-        headerTitleStyle: { fontWeight: "700" },
-        contentStyle: { backgroundColor: "#fdfaf3" },
+        headerTitleStyle: tw`font-bold`,
+        contentStyle: tw`bg-[#fdfaf3]`,
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />

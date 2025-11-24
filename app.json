@@ -13,9 +13,11 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "icon": "./assets/Favicon.png",
       "bundleIdentifier": "com.shauryaverma.busybee",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDisplayName": "Busy Bee"
       }
     },
     "android": {

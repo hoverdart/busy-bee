@@ -1,10 +1,11 @@
 import { Stack } from "expo-router"
+import tw from "twrnc"
 import { FirebaseProvider } from "../context/FirebaseProvider"
 import { CalendarProvider } from "../context/CalendarProvider"
 
 const screenStyle = {
   headerShown: false,
-  contentStyle: { backgroundColor: "#fdf6e6" },
+  contentStyle: tw`bg-[#fdf6e6]`,
 }
 
 export default function RootLayout() {

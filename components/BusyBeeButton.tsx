@@ -1,4 +1,5 @@
 import { Text, TouchableOpacity } from "react-native"
+import tw from "twrnc"
 
 type BusyBeeButtonProps = {
   title: string
@@ -7,14 +8,9 @@ type BusyBeeButtonProps = {
 
 export const BusyBeeButton = ({ title, onPress }: BusyBeeButtonProps) => (
   <TouchableOpacity
-    style={{
-      backgroundColor: "#FFD600",
-      padding: 14,
-      borderRadius: 10,
-      marginVertical: 10,
-    }}
+    style={tw`bg-[#FFD600] p-[14px] rounded-xl my-[10px]`}
     onPress={onPress}
   >
-    <Text style={{ textAlign: "center", fontWeight: "600" }}>{title}</Text>
+    <Text style={tw`text-center font-semibold`}>{title}</Text>
   </TouchableOpacity>
 )

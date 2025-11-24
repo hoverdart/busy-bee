@@ -1,4 +1,5 @@
 import { Text, View } from "react-native"
+import tw from "twrnc"
 import type { CalendarEvent } from "../context/CalendarProvider"
 
 type EventCardProps = {
@@ -9,16 +10,9 @@ const formatDate = (d: string | Date) => (d instanceof Date ? d.toLocaleString()
 
 const EventCard: React.FC<EventCardProps> = ({ event }) => (
   <View
-    style={{
-      padding: 16,
-      backgroundColor: "#fff",
-      borderRadius: 10,
-      marginVertical: 10,
-      borderWidth: 1,
-      borderColor: "#eee",
-    }}
+    style={tw`p-4 bg-white rounded-xl my-[10px] border border-[#eee]`}
   >
-    <Text style={{ fontWeight: "700" }}>{event.title}</Text>
+    <Text style={tw`font-bold`}>{event.title}</Text>
     <Text>{formatDate(event.start)} → {formatDate(event.end)}</Text>
   </View>
 )

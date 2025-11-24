@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from "react-native"
+import tw from "twrnc"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useFirebase } from "../../../context/FirebaseProvider"
 import { deleteUser } from "firebase/auth"
@@ -63,51 +64,33 @@ export default function AccountSettings() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
-      <ScrollView
-        contentContainerStyle={{ padding: 24, paddingBottom: 80 }}
-        contentInsetAdjustmentBehavior="automatic"
-      >
-        <View style={{ padding: 20, borderRadius: 18, backgroundColor: "#fff" }}>
-          <Text style={{ fontSize: 18, fontWeight: "700" }}>Signed in as</Text>
-          <Text style={{ marginTop: 6, fontSize: 24, fontWeight: "700", color: "#4c3f1e" }}>
+    <SafeAreaView style={tw`flex-1 bg-[#fdf6e6]`}>
+      <ScrollView contentContainerStyle={tw`p-6 pb-20`} contentInsetAdjustmentBehavior="automatic">
+        <View style={tw`p-5 rounded-[18px] bg-white`}>
+          <Text style={tw`text-lg font-bold`}>Signed in as</Text>
+          <Text style={tw`mt-[6px] text-[24px] font-bold text-[#4c3f1e]`}>
             {user?.displayName ?? user?.email ?? "BusyBee user"}
           </Text>
-          {user?.email ? <Text style={{ marginTop: 4, color: "#777" }}>{user.email}</Text> : null}
+          {user?.email ? <Text style={tw`mt-1 text-[#777]`}>{user.email}</Text> : null}
         </View>
 
-        <View
-          style={{
-            marginTop: 24,
-            padding: 20,
-            borderRadius: 18,
-            backgroundColor: "#fff",
-            borderWidth: 1,
-            borderColor: "#ffe2d7",
-          }}
-        >
-          <Text style={{ fontSize: 18, fontWeight: "700", color: "#962d17" }}>Delete account</Text>
-          <Text style={{ marginTop: 8, color: "#5c5131" }}>
+        <View style={tw`mt-6 p-5 rounded-[18px] bg-white border border-[#ffe2d7]`}>
+          <Text style={tw`text-lg font-bold text-[#962d17]`}>Delete account</Text>
+          <Text style={tw`mt-2 text-[#5c5131]`}>
             Removing your account permanently erases BusyBee data and unlinks any connected calendars.
           </Text>
           <TouchableOpacity
             onPress={confirmDelete}
             disabled={deleting || !user}
-            style={{
-              marginTop: 16,
-              paddingVertical: 12,
-              borderRadius: 10,
-              backgroundColor: deleting ? "#f3b7aa" : "#f35b41",
-              alignItems: "center",
-            }}
+            style={[tw`mt-4 py-3 rounded-xl items-center`, deleting ? tw`bg-[#f3b7aa]` : tw`bg-[#f35b41]`]}
           >
             {deleting ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={{ color: "#fff", fontWeight: "700" }}>Delete my account</Text>
+              <Text style={tw`text-white font-bold`}>Delete my account</Text>
             )}
           </TouchableOpacity>
-          {deleteError ? <Text style={{ marginTop: 10, color: "#b42318" }}>{deleteError}</Text> : null}
+          {deleteError ? <Text style={tw`mt-[10px] text-[#b42318]`}>{deleteError}</Text> : null}
         </View>
       </ScrollView>
     </SafeAreaView>

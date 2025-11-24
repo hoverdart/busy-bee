@@ -112,7 +112,6 @@ export const useGoogleAuth = () => {
           {
             email: userCred.user.email,
             displayName: userCred.user.displayName,
-            photoURL: userCred.user.photoURL,
             calendarEvents,
             calendars: calendarSources,
             lastSyncedAt: new Date().toISOString(),

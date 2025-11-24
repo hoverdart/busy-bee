@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
-import { Alert, Text, TouchableOpacity, View, FlatList } from "react-native"
+import { Alert, Text, TouchableOpacity, View, ScrollView } from "react-native"
+import tw from "twrnc"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useCalendar, type CalendarEvent } from "../../context/CalendarProvider"
 import { BusyBeeButton } from "../../components/BusyBeeButton"
@@ -32,23 +33,16 @@ const buildMonthMatrix = (anchor: Date) => {
   return days
 }
 
-const EventRow = ({event,onLongPress,}: {event: CalendarEvent, onLongPress: (event: CalendarEvent) => void}) => {
+const EventRow = ({ event, onLongPress }: { event: CalendarEvent; onLongPress: (event: CalendarEvent) => void }) => {
   const start = event.start instanceof Date ? event.start : new Date(event.start)
   const end = event.end instanceof Date ? event.end : new Date(event.end)
   return (
     <TouchableOpacity
       onLongPress={() => onLongPress(event)}
-      style={{
-        padding: 12,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: "#eee",
-        marginBottom: 12,
-        backgroundColor: "#fff",
-      }}
+      style={tw`p-3 rounded-xl border border-[#eee] mb-3 bg-white`}
     >
-      <Text style={{ fontWeight: "600" }}>{event.title}</Text>
-      <Text style={{ color: "#555", marginTop: 4 }}>
+      <Text style={tw`font-semibold`}>{event.title}</Text>
+      <Text style={tw`text-[#555] mt-1`}>
         {start.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} -{" "}
         {end.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
       </Text>
@@ -100,8 +94,8 @@ export default function CalendarTab() {
   }
 
   const renderDayCard = () => (
-    <View style={{ paddingTop: 16, justifyContent: "center", alignItems: "center" }}>
-      <Text style={{ fontSize: 20, fontWeight: "700", marginBottom: 12 }}>
+    <View style={tw`pt-4 justify-center items-center`}>
+      <Text style={tw`text-xl font-bold mb-3`}>
         {parseDateKey(selectedDateKey).toLocaleDateString(undefined, {
           weekday: "long",
           month: "long",
@@ -113,45 +107,28 @@ export default function CalendarTab() {
 
   const renderCalendarFilters = () =>
     calendars.length ? (
-      <View style={{ marginBottom: 16 }}>
+      <View style={tw`mb-4`}>
         <TouchableOpacity
           onPress={() => setFiltersExpanded((prev) => !prev)}
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            paddingVertical: 10,
-          }}
+          style={tw`flex-row justify-between items-center py-[10px]`}
         >
-          <Text style={{ fontSize: 18, fontWeight: "700", color: "#3e2e16" }}>Select calendars</Text>
-          <Text style={{ fontSize: 18 }}>{filtersExpanded ? "▲" : "▼"}</Text>
+          <Text style={tw`text-lg font-bold text-[#3e2e16]`}>Select calendars</Text>
+          <Text style={tw`text-lg`}>{filtersExpanded ? "▲" : "▼"}</Text>
         </TouchableOpacity>
         {filtersExpanded ? (
           <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              paddingTop: 8,
-              borderTopWidth: 1,
-              borderColor: "#f0e1c7",
-            }}
+            style={tw`flex-row flex-wrap pt-2 mt-4 border-t border-[#f0e1c7]`}
           >
             {calendars.map((calendar) => (
               <TouchableOpacity
                 key={calendar.id}
                 onPress={() => toggleCalendar(calendar.id)}
-                style={{
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  borderRadius: 999,
-                  borderWidth: 1,
-                  borderColor: calendar.selected ? "#f5a524" : "#e7dcc7",
-                  backgroundColor: calendar.selected ? "#f5a524" : "#fff",
-                  marginRight: 8,
-                  marginBottom: 8,
-                }}
+                style={[
+                  tw`px-3 py-2 rounded-full border mr-2 mb-2`,
+                  calendar.selected ? tw`bg-[#f5a524] border-[#f5a524]` : tw`bg-white border-[#e7dcc7]`,
+                ]}
               >
-                <Text style={{ color: calendar.selected ? "#fff" : "#7a6a43", fontWeight: "600" }}>
+                <Text style={[tw`font-semibold`, calendar.selected ? tw`text-white` : tw`text-[#7a6a43]`]}>
                   {calendar.name}
                 </Text>
               </TouchableOpacity>
@@ -161,127 +138,96 @@ export default function CalendarTab() {
       </View>
     ) : null
 
-  const renderFooter = () => (
-    <View style={{ padding: 24, paddingTop: 16 }}>
-      {renderCalendarFilters()}
-      <BusyBeeButton title="Add Event" onPress={() => router.push("/addEvent")} />
-    </View>
-  )
-
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fdf6e6" }}>
-      <FlatList
-        data={selectedEvents}
-        keyExtractor={(item, index) => `${item.id}-${new Date(item.start).getTime()}-${index}`}
-        renderItem={({ item }) => <EventRow event={item} onLongPress={handleRemove} />}
-        ListEmptyComponent={
-          <View style={{ paddingHorizontal: 24, paddingBottom: 16 }}>
-            <Text style={{ color: "#777" }}>No events for this day.</Text>
+    <SafeAreaView style={tw`flex-1 bg-[#fdf6e6]`}>
+      <ScrollView contentContainerStyle={tw`pb-18 px-6`}>
+        <View style={tw`flex-1 pt-6`}>
+          <View style={tw`bg-white p-6 rounded-2xl shadow-sm elevation-1`}>
+            <Text style={tw`text-[28px] font-bold text-[#3e2e16]`}>My Calendar</Text>
+            <Text style={tw`mt-1 text-[#7c6b52]`}>
+              Tap a date to view events. Long-press an event to remove it.
+            </Text>
           </View>
-        }
-        ListHeaderComponent={
-          <>
-            <View style={{ flex: 1, paddingTop: 24 }}>
-              <View
-                style={{
-                  backgroundColor: "#fff",
-                  padding: 24,
-                  borderRadius: 18,
-                  shadowColor: "#000",
-                  shadowOpacity: 0.05,
-                  shadowRadius: 10,
-                  elevation: 1,
-                }}
-              >
-                <Text style={{ fontSize: 28, fontWeight: "700", color: "#3e2e16" }}>My Calendar</Text>
-                <Text style={{ marginTop: 4, color: "#7c6b52" }}>
-                  Tap a date to view events. Long-press an event to remove it.
-                </Text>
-              </View>
 
-              <View
-                style={{
-                  marginTop: 16,
-                  padding: 16,
-                  borderRadius: 16,
-                  backgroundColor: "#fff",
-                  shadowColor: "#000",
-                  shadowOpacity: 0.05,
-                  shadowRadius: 10,
-                  elevation: 1,
-                }}
-              >
-                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                  <TouchableOpacity onPress={() => changeMonth(-1)}>
-                    <Text style={{ fontSize: 18 }}>◀</Text>
-                  </TouchableOpacity>
-                  <Text style={{ fontSize: 18, fontWeight: "600"}}>
-                    {currentMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
-                  </Text>
-                  <TouchableOpacity onPress={() => changeMonth(1)}>
-                    <Text style={{ fontSize: 18 }}>▶</Text>
-                  </TouchableOpacity>
-                </View>
-
-                <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 12 }}>
-                  {daysOfWeek.map((day) => (
-                    <Text key={day} style={{ width: "14%", textAlign: "center", fontWeight: "600", color: "#888" }}>
-                      {day}
-                    </Text>
-                  ))}
-                </View>
-
-                <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 8 }}>
-                  {monthDays.map((day) => {
-                    const key = dateKey(day)
-                    const isCurrentMonth = day.getMonth() === currentMonth.getMonth()
-                    const isSelected = selectedDateKey === key
-                    const hasEvents = !!eventsByDay[key]?.length
-                    return (
-                      <TouchableOpacity
-                        key={key + day.getTime()}
-                        onPress={() => {
-                          setSelectedDateKey(key)
-                        }}
-                        style={{
-                          width: "14.28%",
-                          aspectRatio: 1,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: 8,
-                          marginVertical: 4,
-                          backgroundColor: isSelected ? "#f5a524" : "transparent",
-                        }}
-                      >
-                        <Text
-                          style={{ color: isCurrentMonth ? (isSelected ? "#fff" : "#222") : "#bbb", fontWeight: "600" }}
-                        >
-                          {day.getDate()}
-                        </Text>
-                        {hasEvents ? (
-                          <View
-                            style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: 3,
-                              backgroundColor: isSelected ? "#fff" : "#f5a524",
-                              marginTop: 4,
-                            }}
-                          />
-                        ) : null}
-                      </TouchableOpacity>
-                    )
-                  })}
-                </View>
-              </View>
+          <View style={tw`mt-4 p-4 rounded-2xl bg-white shadow-sm elevation-1`}>
+            <View style={tw`flex-row justify-between items-center`}>
+              <TouchableOpacity onPress={() => changeMonth(-1)}>
+                <Text style={tw`text-lg`}>◀</Text>
+              </TouchableOpacity>
+              <Text style={tw`text-lg font-semibold`}>
+                {currentMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+              </Text>
+              <TouchableOpacity onPress={() => changeMonth(1)}>
+                <Text style={tw`text-lg`}>▶</Text>
+              </TouchableOpacity>
             </View>
 
-            {renderDayCard()}
-          </>
-        }
-        ListFooterComponent={renderFooter}
-        contentContainerStyle={{ paddingBottom: 72, paddingHorizontal: 24 }}
-      />
+            <View style={tw`flex-row justify-between mt-3`}>
+              {daysOfWeek.map((day) => (
+                <Text key={day} style={tw`w-[14%] text-center font-semibold text-[#888]`}>
+                  {day}
+                </Text>
+              ))}
+            </View>
+
+            <View style={tw`flex-row flex-wrap mt-2`}>
+              {monthDays.map((day) => {
+                const key = dateKey(day)
+                const isCurrentMonth = day.getMonth() === currentMonth.getMonth()
+                const isSelected = selectedDateKey === key
+                const hasEvents = !!eventsByDay[key]?.length
+                return (
+                  <TouchableOpacity
+                    key={key + day.getTime()}
+                    onPress={() => {
+                      setSelectedDateKey(key)
+                    }}
+                    style={[
+                      tw`w-[14.28%] aspect-square items-center justify-center rounded-lg my-1`,
+                      isSelected ? tw`bg-[#f5a524]` : tw`bg-transparent`,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        tw`font-semibold`,
+                        { color: isCurrentMonth ? (isSelected ? "#fff" : "#222") : "#bbb" },
+                      ]}
+                    >
+                      {day.getDate()}
+                    </Text>
+                    {hasEvents ? (
+                      <View
+                        style={[
+                          tw`mt-1 w-[6px] h-[6px] rounded-[3px]`,
+                          isSelected ? tw`bg-white` : tw`bg-[#f5a524]`,
+                        ]}
+                      />
+                    ) : null}
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+          </View>
+        </View>
+
+        {renderDayCard()}
+
+        <View style={tw`mt-4`}>
+          {selectedEvents.length ? (
+            selectedEvents.map((item, index) => (
+              <EventRow key={`${item.id}-${index}`} event={item} onLongPress={handleRemove} />
+            ))
+          ) : (
+            <Text style={tw`text-[#777]`}>No events for this day.</Text>
+          )}
+        </View>
+
+        {renderCalendarFilters()}
+
+        <View style={tw`pt-4 pb-6`}>
+          <BusyBeeButton title="Add Event" onPress={() => router.push("/addEvent")} />
+        </View>
+      </ScrollView>
     </SafeAreaView>
   )
 }

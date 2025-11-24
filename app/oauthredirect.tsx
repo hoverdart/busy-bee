@@ -1,5 +1,6 @@
 import { useEffect } from "react"
 import { ActivityIndicator, View } from "react-native"
+import tw from "twrnc"
 import { useRouter } from "expo-router"
 import * as WebBrowser from "expo-web-browser"
 
@@ -14,7 +15,7 @@ export default function OAuthRedirect() {
   }, [router])
 
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+    <View style={tw`flex-1 items-center justify-center`}>
       <ActivityIndicator />
     </View>
   )
